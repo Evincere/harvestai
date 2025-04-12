@@ -1,4 +1,3 @@
-
 'use client';
 
 import {useState} from 'react';
@@ -35,7 +34,7 @@ export default function Home() {
     try {
       // Simulate AI analysis to determine ripeness level
       // In a real application, this would be replaced with an actual AI model
-      const simulatedRipeness = 'Mid'; // Example: Early, Mid, Late
+      const simulatedRipeness = 'Medio'; // Example: Early, Mid, Late
       setRipenessLevel(simulatedRipeness);
 
       const input = {
@@ -46,15 +45,15 @@ export default function Home() {
       const result = await getRipenessRecommendations(input);
       setRecommendations(result.recommendations);
       toast({
-        title: 'Analysis Complete',
-        description: 'Ripeness analysis and recommendations generated successfully.',
+        title: 'Análisis Completo',
+        description: 'Análisis de madurez y recomendaciones generadas con éxito.',
       });
     } catch (error: any) {
-      console.error('Error during analysis:', error);
+      console.error('Error durante el análisis:', error);
       toast({
         variant: 'destructive',
-        title: 'Analysis Error',
-        description: error.message || 'Failed to analyze image and get recommendations. Please try again.',
+        title: 'Error de Análisis',
+        description: error.message || 'Error al analizar la imagen y obtener recomendaciones. Por favor, inténtalo de nuevo.',
       });
     } finally {
       setLoading(false);
@@ -66,8 +65,8 @@ export default function Home() {
       <h1 className="text-3xl font-bold mb-4 text-primary">HarvestAI</h1>
       <Card className="w-full max-w-md space-y-4">
         <CardHeader>
-          <CardTitle>Image Analysis</CardTitle>
-          <CardDescription>Upload an image of your cannabis plant to determine its ripeness and get recommendations.</CardDescription>
+          <CardTitle>Análisis de Imagen</CardTitle>
+          <CardDescription>Sube una imagen de tu planta de cannabis para determinar su madurez y obtener recomendaciones.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col items-center space-y-2">
@@ -77,7 +76,7 @@ export default function Home() {
               <div className="border rounded-md p-4 w-full flex items-center justify-center bg-secondary/10">
                 <label htmlFor="image-upload" className="cursor-pointer">
                   <Icons.plusCircle className="h-6 w-6 text-secondary" />
-                  <span className="sr-only">Upload Image</span>
+                  <span className="sr-only">Subir Imagen</span>
                 </label>
               </div>
             )}
@@ -90,12 +89,12 @@ export default function Home() {
             />
             <Button variant="secondary" asChild>
               <label htmlFor="image-upload" className="cursor-pointer">
-                {image ? 'Change Image' : 'Upload Image'}
+                {image ? 'Cambiar Imagen' : 'Subir Imagen'}
               </label>
             </Button>
           </div>
           <Textarea
-            placeholder="Describe the plant (optional)"
+            placeholder="Describe la planta (opcional)"
             value={plantDescription}
             onChange={(e) => setPlantDescription(e.target.value)}
             className="resize-none"
@@ -104,24 +103,24 @@ export default function Home() {
             {loading ? (
               <>
                 <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing...
+                Analizando...
               </>
             ) : (
-              'Analyze'
+              'Analizar'
             )}
           </Button>
           {ripenessLevel && (
             <div className="mt-4">
-              <h2 className="text-xl font-semibold text-accent">Analysis Results</h2>
+              <h2 className="text-xl font-semibold text-accent">Resultados del Análisis</h2>
               <p>
-                Predicted Harvest Time:{' '}
-                <span className="font-bold">{loading ? <Skeleton className="h-4 w-24" /> : `Ready to harvest in 1 week (${ripenessLevel})`}</span>
+                Tiempo de Cosecha Estimado:{' '}
+                <span className="font-bold">{loading ? <Skeleton className="h-4 w-24" /> : `Listo para cosechar en 1 semana (${ripenessLevel})`}</span>
               </p>
             </div>
           )}
           {recommendations.length > 0 && (
             <div className="mt-4">
-              <h2 className="text-xl font-semibold text-accent">Recommendations</h2>
+              <h2 className="text-xl font-semibold text-accent">Recomendaciones</h2>
               <ul className="list-disc pl-5 space-y-2">
                 {loading ? (
                   <>
