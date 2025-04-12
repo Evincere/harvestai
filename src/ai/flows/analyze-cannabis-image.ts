@@ -39,13 +39,23 @@ const analyzeImage = ai.defineTool({
     additionalNotes: z.string().optional().describe('Any additional notes or observations from the analysis.'),
   }),
   async run(input) {
-    // Mock analysis result (replace with actual AI analysis later)
-    return {
-      ripenessLevel: 'Mid',
-      confidence: 0.75,
-      additionalNotes: 'This is a simulated analysis using the AI tool.'
-    };
-  }
+    try {
+      const response = await ai.generate({
+        model: 'googleai/gemini-pro-vision',
+        prompt: `You are an expert cannabis plant analyst. Use the provided image to determine the ripeness level of the plant. Consider the ripeness level as Early, Mid or Late. The confidence is a number from 0 to 1.  Use the image to get the ripeness level, confidence and any additional observations. Please answer in json format with the keys "ripenessLevel", "confidence" and "additionalNotes".`,
+        media: [{ url: input.photoUrl }],
+      });
+      console.log(response); // Log the entire response
+      const parsedResponse = JSON.parse(response);
+      if (typeof parsedResponse.confidence !== 'number') {
+        throw new Error('Could not parse confidence value from AI response.');
+      }
+      return { ripenessLevel: parsedResponse.ripenessLevel, confidence: parsedResponse.confidence, additionalNotes: parsedResponse.additionalNotes };
+    } catch (error) {
+      console.error('Error during AI analysis:', error);
+      return { ripenessLevel: 'Unknown', confidence: 0, additionalNotes: 'Error parsing AI response' };
+    }
+  },
 });
 
 const analyzeCannabisImagePrompt = ai.definePrompt({
@@ -64,12 +74,13 @@ const analyzeCannabisImagePrompt = ai.definePrompt({
       additionalNotes: z.string().optional().describe('Any additional notes or observations from the analysis.'),
     }),
   },
-  prompt: `You are an expert cannabis plant analyst. Use the provided image and any available description to determine the ripeness level of the plant.
-You have access to a tool called analyzeImage that can help you analyze the image. Please use it to get the ripeness level, confidence and any additional observations..
-    
-Description: {{{description}}}
-Photo: {{media url=photoUrl}}
-`,
+  prompt: `You are an expert cannabis plant analyst.  
+    You have access to a tool called analyzeImage that can help you analyze the image. Please use it to get the ripeness level, confidence and any additional observations.
+
+    The user has provided the following description of the plant, use it to enhance the analysis:  {{{description}}}
+
+    Analyze the image provided.
+  `,
 });
 
 const analyzeCannabisImageFlow = ai.defineFlow<
@@ -81,8 +92,8 @@ const analyzeCannabisImageFlow = ai.defineFlow<
     inputSchema: AnalyzeCannabisImageInputSchema,
     outputSchema: AnalyzeCannabisImageOutputSchema,
   },
-  async input => {
-    const { output } = await analyzeCannabisImagePrompt(input);
-    return output!;
+  async (input) => {
+    const output = await analyzeCannabisImagePrompt(input);
+    return output ?? { ripenessLevel: 'Unknown', confidence: 0, additionalNotes: 'Error parsing AI response' };
   }
 );
