@@ -5,7 +5,6 @@ import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
-import {getRipenessRecommendations} from '@/ai/flows/ripeness-recommendations';
 import {Skeleton} from '@/components/ui/skeleton';
 import {useToast} from '@/hooks/use-toast';
 import {Icons} from '@/components/icons';
@@ -14,7 +13,6 @@ export default function Home() {
   const [image, setImage] = useState<string | null>(null);
   const [ripenessLevel, setRipenessLevel] = useState('');
   const [plantDescription, setPlantDescription] = useState('');
-  const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const {toast} = useToast();
 
@@ -37,23 +35,16 @@ export default function Home() {
       const simulatedRipeness = 'Medio'; // Example: Early, Mid, Late
       setRipenessLevel(simulatedRipeness);
 
-      const input = {
-        ripenessLevel: simulatedRipeness,
-        plantDescription: plantDescription,
-      };
-
-      const result = await getRipenessRecommendations(input);
-      setRecommendations(result.recommendations);
       toast({
         title: 'Análisis Completo',
-        description: 'Análisis de madurez y recomendaciones generadas con éxito.',
+        description: 'Análisis de madurez generado con éxito.',
       });
     } catch (error: any) {
       console.error('Error durante el análisis:', error);
       toast({
         variant: 'destructive',
         title: 'Error de Análisis',
-        description: error.message || 'Error al analizar la imagen y obtener recomendaciones. Por favor, inténtalo de nuevo.',
+        description: error.message || 'Error al analizar la imagen. Por favor, inténtalo de nuevo.',
       });
     } finally {
       setLoading(false);
@@ -66,7 +57,7 @@ export default function Home() {
       <Card className="w-full max-w-md space-y-4">
         <CardHeader>
           <CardTitle>Análisis de Imagen</CardTitle>
-          <CardDescription>Sube una imagen de tu planta de cannabis para determinar su madurez y obtener recomendaciones.</CardDescription>
+          <CardDescription>Sube una imagen de tu planta de cannabis para determinar su madurez.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col items-center space-y-2">
@@ -116,24 +107,6 @@ export default function Home() {
                 Tiempo de Cosecha Estimado:{' '}
                 <span className="font-bold">{loading ? <Skeleton className="h-4 w-24" /> : `Listo para cosechar en 1 semana (${ripenessLevel})`}</span>
               </p>
-            </div>
-          )}
-          {recommendations.length > 0 && (
-            <div className="mt-4">
-              <h2 className="text-xl font-semibold text-accent">Recomendaciones</h2>
-              <ul className="list-disc pl-5 space-y-2">
-                {loading ? (
-                  <>
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-48" />
-                  </>
-                ) : (
-                  recommendations.map((recommendation, index) => (
-                    <li key={index}>{recommendation}</li>
-                  ))
-                )}
-              </ul>
             </div>
           )}
         </CardContent>
