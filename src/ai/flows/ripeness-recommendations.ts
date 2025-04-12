@@ -1,27 +1,27 @@
 'use server';
 
 /**
- * @fileOverview Provides recommendations for optimizing cannabis plant growth based on ripeness analysis.
+ * @fileOverview Proporciona recomendaciones para optimizar el crecimiento de la planta de cannabis basándose en el análisis de madurez.
  *
- * - getRipenessRecommendations - A function that provides ripeness recommendations.
- * - RipenessRecommendationsInput - The input type for the getRipenessRecommendations function.
- * - RipenessRecommendationsOutput - The return type for the getRipenessRecommendations function.
+ * - obtenerRecomendacionesDeMadurez - Una función que proporciona recomendaciones de madurez.
+ * - EntradaRecomendacionesDeMadurez - El tipo de entrada para la función obtenerRecomendacionesDeMadurez.
+ * - SalidaRecomendacionesDeMadurez - El tipo de retorno para la función obtenerRecomendacionesDeMadurez.
  */
 
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
 
 const RipenessRecommendationsInputSchema = z.object({
-  ripenessLevel: z.string().describe('The ripeness level of the cannabis plant (e.g., early, mid, late).'),
-  plantDescription: z.string().describe('A description of the cannabis plant, including any issues or observations.'),
+  ripenessLevel: z.string().describe('El nivel de madurez de la planta de cannabis (p. ej., temprano, medio, tardío).'),
+  plantDescription: z.string().describe('Una descripción de la planta de cannabis, incluyendo cualquier problema u observación.'),
 });
 export type RipenessRecommendationsInput = z.infer<typeof RipenessRecommendationsInputSchema>;
 
 const RipenessRecommendationsOutputSchema = z.object({
   recommendations: z.array(
-    z.string().describe('A list of recommendations for optimizing the cannabis plant growth.')
+    z.string().describe('Una lista de recomendaciones para optimizar el crecimiento de la planta de cannabis.')
   ).
-describe('The recommendations based on the ripeness level and plant description.'),
+describe('Las recomendaciones basadas en el nivel de madurez y la descripción de la planta.'),
 });
 export type RipenessRecommendationsOutput = z.infer<typeof RipenessRecommendationsOutputSchema>;
 
@@ -33,26 +33,26 @@ const ripenessRecommendationsPrompt = ai.definePrompt({
   name: 'ripenessRecommendationsPrompt',
   input: {
     schema: z.object({
-      ripenessLevel: z.string().describe('The ripeness level of the cannabis plant.'),
-      plantDescription: z.string().describe('A description of the cannabis plant.'),
+      ripenessLevel: z.string().describe('El nivel de madurez de la planta de cannabis.'),
+      plantDescription: z.string().describe('Una descripción de la planta de cannabis.'),
     }),
   },
   output: {
     schema: z.object({
       recommendations: z.array(
-        z.string().describe('A list of recommendations for optimizing the cannabis plant growth.')
+        z.string().describe('Una lista de recomendaciones para optimizar el crecimiento de la planta de cannabis.')
       ).
-describe('The recommendations based on the ripeness level and plant description.'),
+describe('Las recomendaciones basadas en el nivel de madurez y la descripción de la planta.'),
     }),
   },
-  prompt: `You are an expert cannabis cultivator providing advice to growers.
+  prompt: `Eres un experto cultivador de cannabis que proporciona consejos a los cultivadores.
 
-  Based on the ripeness level and description of the plant, provide tailored recommendations to optimize growth conditions and maximize yield.
+  Basándote en el nivel de madurez y la descripción de la planta, proporciona recomendaciones personalizadas para optimizar las condiciones de crecimiento y maximizar el rendimiento.
 
-  Ripeness Level: {{{ripenessLevel}}}
-  Plant Description: {{{plantDescription}}}
+  Nivel de Madurez: {{{ripenessLevel}}}
+  Descripción de la Planta: {{{plantDescription}}}
 
-  Recommendations:
+  Recomendaciones:
   `,
 });
 
