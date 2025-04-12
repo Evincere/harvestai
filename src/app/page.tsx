@@ -9,10 +9,11 @@ import {Skeleton} from '@/components/ui/skeleton';
 import {useToast} from '@/hooks/use-toast';
 import {Icons} from '@/components/icons';
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert"
+import { analyzeCannabisImage, type AnalyzeCannabisImageOutput } from '@/ai/flows/analyze-cannabis-image';
 
 export default function Home() {
   const [image, setImage] = useState<string | null>(null);
-  const [ripenessLevel, setRipenessLevel] = useState('');
+  const [analysisResult, setAnalysisResult] = useState<AnalyzeCannabisImageOutput | null>(null);
   const [plantDescription, setPlantDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const {toast} = useToast();
@@ -56,11 +57,18 @@ export default function Home() {
 
   const handleAnalyze = async () => {
     setLoading(true);
+    setAnalysisResult(null); // Clear previous results
     try {
-      // Simulate AI analysis to determine ripeness level
-      // In a real application, this would be replaced with an actual AI model
-      const simulatedRipeness = 'Medio'; // Example: Early, Mid, Late
-      setRipenessLevel(simulatedRipeness);
+      if (!image) {
+        throw new Error('Por favor, sube una imagen antes de analizar.');
+      }
+
+      const result = await analyzeCannabisImage({
+        photoUrl: image,
+        description: plantDescription,
+      });
+
+      setAnalysisResult(result);
 
       toast({
         title: 'Análisis Completo',
@@ -134,13 +142,24 @@ export default function Home() {
               'Analizar'
             )}
           </Button>
-          {ripenessLevel && (
+          {analysisResult && (
             <div className="mt-4">
               <h2 className="text-xl font-semibold text-accent ">Resultados del Análisis</h2>
               <p>
                 Tiempo de Cosecha Estimado:{' '}
-                <span className="font-bold">{loading ? <Skeleton className="h-4 w-24" /> : `Listo para cosechar en 1 semana (${ripenessLevel})`}</span>
+                <span className="font-bold">
+                  {loading ? (
+                    <Skeleton className="h-4 w-24" />
+                  ) : (
+                    `Madurez: ${analysisResult.ripenessLevel} (Confianza: ${(analysisResult.confidence * 100).toFixed(2)}%)`
+                  )}
+                </span>
               </p>
+              {analysisResult.additionalNotes && (
+                <p>
+                  Notas Adicionales: <span className="font-bold">{analysisResult.additionalNotes}</span>
+                </p>
+              )}
             </div>
           )}
         </CardContent>
