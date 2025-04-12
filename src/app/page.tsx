@@ -18,7 +18,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const {toast} = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -99,19 +99,22 @@ export default function Home() {
             {image ? (
               <img src={image} alt="Cannabis Plant" className="max-h-64 rounded-md shadow-md" />
             ) : (
-              <>
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
-
-                { !(hasCameraPermission) && (
-                    <Alert variant="destructive">
-                              <AlertTitle>Acceso a la Cámara Requerido</AlertTitle>
-                              <AlertDescription>
-                                Por favor, permite el acceso a la cámara para usar esta función.
-                              </AlertDescription>
-                      </Alert>
+              hasCameraPermission === true ? (
+                <>
+                  <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+                </>
+              ) : (
+                hasCameraPermission === false ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>Acceso a la Cámara Requerido</AlertTitle>
+                    <AlertDescription>
+                      Por favor, permite el acceso a la cámara para usar esta función.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                    <div>Loading...</div>
                 )
-                }
-              </>
+              )
             )}
             <Input
               id="image-upload"
@@ -167,3 +170,4 @@ export default function Home() {
     </div>
   );
 }
+
