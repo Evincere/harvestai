@@ -4,82 +4,56 @@
 
 body {
   font-family: 'Kanit', sans-serif;
-  background: linear-gradient(45deg, rgba(3,79,44,1) 0%, rgba(17,163,46,1) 50%, rgba(3,79,44,1) 100%);
-  overflow: hidden; /* Hide scrollbars */
-  color: white;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  overflow: hidden; /* Hide scrollbars */
 }
 
 @layer base {
   :root {
-    --background: 300 5% 5%; /* Deep Purple */
-    --foreground: 0 0% 98%; /* Off White */
-    --card: 300 5% 7%; /* Slightly Lighter Purple */
-    --card-foreground: 0 0% 98%;
-    --popover: 300 5% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 144 70% 50%; /* Vibrant Green */
-    --primary-foreground: 0 0% 10%;
-    --secondary: 200 40% 40%; /* Cool Cyan */
-    --secondary-foreground: 0 0% 10%;
-    --muted: 300 5% 10%; /* Darker Purple */
-    --muted-foreground: 0 0% 60%;
-    --accent: 49 90% 60%; /* Electric Yellow */
-    --accent-foreground: 0 0% 10%;
-    --destructive: 0 70% 50%; /* Bright Red */
+    --background: 220 13% 13%; /* Darker background */
+    --foreground: 0 0% 95%; /* Light foreground */
+    --card: 220 11% 18%; /* Darker card background */
+    --card-foreground: 0 0% 95%;
+    --popover: 220 11% 18%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 142 76% 36%; /* Psychedelic Green */
+    --primary-foreground: 220 10% 10%;
+    --secondary: 271 49% 62%; /* Psychedelic Purple */
+    --secondary-foreground: 220 10% 10%;
+    --muted: 220 9% 23%; /* Darker muted background */
+    --muted-foreground: 0 0% 70%; /* Lighter muted foreground */
+    --accent: 49 90% 60%; /* Gold */
+    --accent-foreground: 220 10% 10%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 10%;
-    --border: 300 5% 20%; /* Soft Purple */
-    --input: 300 5% 15%; /* Dark Input */
-    --ring: 144 70% 40%; /* Ring Green */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 220 9% 30%; /* Darker border */
+    --input: 220 9% 25%; /* Darker input background */
+    --ring: 142 76% 40%; /* Psychedelic Green ring */
     --radius: 0.75rem;
-    --sidebar-background: 300 5% 10%;
-    --sidebar-foreground: 0 0% 80%;
-    --sidebar-primary: 144 70% 40%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 49 90% 50%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 300 5% 25%;
-    --sidebar-ring: 144 70% 30%;
   }
 
   .dark {
-    --background: 300 5% 5%;
-    --foreground: 0 0% 98%;
-    --card: 300 5% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 300 5% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 144 70% 50%;
-    --primary-foreground: 0 0% 10%;
-    --secondary: 200 40% 40%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 300 5% 10%;
-    --muted-foreground: 0 0% 60%;
+    --background: 220 13% 13%;
+    --foreground: 0 0% 95%;
+    --card: 220 11% 18%;
+    --card-foreground: 0 0% 95%;
+    --popover: 220 11% 18%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 142 76% 36%; /* Psychedelic Green */
+    --primary-foreground: 220 10% 10%;
+    --secondary: 271 49% 62%; /* Psychedelic Purple */
+    --secondary-foreground: 220 10% 10%;
+    --muted: 220 9% 23%;
+    --muted-foreground: 0 0% 70%;
     --accent: 49 90% 60%;
-    --accent-foreground: 0 0% 10%;
+    --accent-foreground: 220 10% 10%;
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 10%;
-    --border: 300 5% 20%;
-    --input: 300 5% 15%;
-    --ring: 144 70% 40%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 300 5% 10%;
-    --sidebar-foreground: 0 0% 80%;
-    --sidebar-primary: 144 70% 40%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 49 90% 50%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 300 5% 25%;
-    --sidebar-ring: 144 70% 30%;
+    --border: 220 9% 30%;
+    --input: 220 9% 25%;
+    --ring: 142 76% 40%; /* Psychedelic Green ring */
   }
 }
 
@@ -92,72 +66,22 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-/* Psychedelic Effects */
-.psychedelic-bg {
-  background: linear-gradient(45deg, #FF00FF, #00FFFF, #FFFF00, #FF00FF);
-  background-size: 400% 400%;
-  animation: psychedelic 15s ease infinite;
+/* Track */
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
 }
 
-.psychedelic-text {
-  color: white;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-  animation: textGlow 3s ease-in-out infinite alternate;
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 10px;
 }
 
-@keyframes psychedelic {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--secondary));
 }
-
-@keyframes textGlow {
-  from {
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-  }
-  to {
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
-  }
-}
-
-/* Modern Card Styling */
-.modern-card {
-  @apply rounded-2xl shadow-xl bg-card;
-}
-
-/* Elegant Button Styling */
-.elegant-button {
-  @apply rounded-full px-6 py-3 font-semibold text-lg;
-}
-
-/* Holographic Effect */
-.holographic-effect {
-    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: rainbow 5s linear infinite;
-}
-
-@keyframes rainbow {
-    to {
-        background-position: 450vw 0;
-    }
-}
-
-/* Glassmorphism effect */
-.glassmorphism {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(8.5px);
-    -webkit-backdrop-filter: blur(8.5px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
 }
