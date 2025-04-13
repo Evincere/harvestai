@@ -6,7 +6,8 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-  overflow: hidden; /* Hide scrollbars */
+  overflow-x: hidden; /* Permitir desplazamiento vertical */
+  min-height: 100vh;
 }
 
 @layer base {
@@ -84,4 +85,3 @@ body {
 ::-webkit-scrollbar {
   width: 8px; /* Width of the scrollbar */
 }
-
