@@ -10,8 +10,8 @@ export async function POST(request: Request) {
   try {
     const {
       photoUrl,
+      microscopicPhotoUrl,
       description,
-      isMicroscopicImage = false,
       variety,
       preferences,
       location
@@ -47,7 +47,8 @@ export async function POST(request: Request) {
           weatherImpact = weatherImpactService.analyzeWeatherImpact(
             weatherData,
             variety as CannabisVariety,
-            ripenessLevel
+            ripenessLevel,
+            preferences as UserPreferences
           );
         }
       } catch (weatherError: any) {
@@ -65,8 +66,8 @@ export async function POST(request: Request) {
     // Analizar la imagen
     const imageAnalysisResult = await analyzeCannabisImage({
       photoUrl,
+      microscopicPhotoUrl,
       description,
-      isMicroscopicImage,
       variety: variety as CannabisVariety,
       preferences: preferences as UserPreferences,
       weatherData // Pasar los datos climáticos al análisis de la imagen
@@ -78,7 +79,8 @@ export async function POST(request: Request) {
       weatherImpact = weatherImpactService.analyzeWeatherImpact(
         weatherData,
         variety as CannabisVariety,
-        imageAnalysisResult.ripenessLevel
+        imageAnalysisResult.ripenessLevel,
+        preferences as UserPreferences
       );
     }
 

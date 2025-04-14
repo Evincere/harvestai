@@ -3,25 +3,44 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LocationSelector } from "./location-selector";
+import { GeoLocation } from "@/types/weather";
 
 interface WeatherFallbackProps {
   onRequestLocation: () => void;
+  onManualLocationSelected?: (location: GeoLocation) => void;
   isLoading: boolean;
   error?: string;
+  currentLocation?: GeoLocation;
 }
 
 export function WeatherFallback({
   onRequestLocation,
+  onManualLocationSelected,
   isLoading,
-  error
+  error,
+  currentLocation
 }: WeatherFallbackProps) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl">Datos Climáticos</CardTitle>
-        <CardDescription>
-          Obtén recomendaciones más precisas basadas en el clima actual
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-xl">Datos Climáticos</CardTitle>
+            <CardDescription>
+              Obtén recomendaciones más precisas basadas en el clima actual
+            </CardDescription>
+          </div>
+          {currentLocation && (
+            <div className="flex items-center bg-secondary/50 px-3 py-1 rounded-full text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1 text-primary"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span className="font-medium">
+                {currentLocation.name || `${currentLocation.latitude.toFixed(2)}, ${currentLocation.longitude.toFixed(2)}`}
+                {currentLocation.country && `, ${currentLocation.country}`}
+              </span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -40,6 +59,12 @@ export function WeatherFallback({
                 <p>No se pueden mostrar datos climáticos reales debido al error. Por favor, intenta de nuevo más tarde o verifica la configuración de las APIs de clima.</p>
               </div>
             </Alert>
+          ) : onManualLocationSelected ? (
+            <LocationSelector
+              onLocationSelected={onManualLocationSelected}
+              onRequestAutoLocation={onRequestLocation}
+              isLoading={isLoading}
+            />
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
