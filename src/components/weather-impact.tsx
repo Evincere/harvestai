@@ -11,7 +11,7 @@ import { WeatherFallback } from './weather-fallback';
 import { WeatherChart } from './weather-chart';
 import { WeatherIcon } from './weather-icon';
 import { LocationSelector } from './location-selector';
-import { MapPin } from 'lucide-react';
+import { MapPin, BarChart2, CloudSun, ListChecks } from 'lucide-react';
 
 interface WeatherImpactProps {
   variety?: CannabisVariety;
@@ -182,9 +182,18 @@ export function WeatherImpact({
         {weatherData && weatherImpact && !('error' in weatherImpact) && !showLocationSelector && (
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview">Resumen</TabsTrigger>
-              <TabsTrigger value="forecast">Pronóstico</TabsTrigger>
-              <TabsTrigger value="recommendations">Recomendaciones</TabsTrigger>
+              <TabsTrigger value="overview">
+                <span className="hidden sm:inline">Resumen</span>
+                <BarChart2 className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+              <TabsTrigger value="forecast">
+                <span className="hidden sm:inline">Pronóstico</span>
+                <CloudSun className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+              <TabsTrigger value="recommendations">
+                <span className="hidden sm:inline">Recomendaciones</span>
+                <ListChecks className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
             </TabsList>
 
             {/* Pestaña de resumen */}

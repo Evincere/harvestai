@@ -42,4 +42,6 @@ next-env.d.ts
 # env files
 .env
 .env.local
-.env.example
+.env.development.local
+.env.test.local
+.env.production.local

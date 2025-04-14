@@ -1,4 +1,5 @@
 import { GeoLocation, WeatherData } from '@/types/weather';
+import { fetchWithSSLSupport } from '@/utils/fetch-utils';
 
 class WeatherApiService {
   async getCurrentWeather(
@@ -9,14 +10,14 @@ class WeatherApiService {
     try {
       // WeatherAPI permite obtener datos actuales y pronóstico en una sola llamada
       const url = `${baseUrl}/forecast.json?key=${apiKey}&q=${location.latitude},${location.longitude}&days=7&aqi=yes&alerts=no`;
-      const response = await fetch(url);
-      
+      const response = await fetchWithSSLSupport(url);
+
       if (!response.ok) {
         throw new Error(`Error al obtener datos de WeatherAPI: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       // Transformar los datos al formato estándar
       return this.transformData(data, location);
     } catch (error) {
@@ -34,8 +35,8 @@ class WeatherApiService {
       wind_speed: data.current.wind_kph,
       precipitation: data.current.precip_mm,
       condition: data.current.condition.text,
-      timestamp: data.current.last_updated_epoch ? 
-        new Date(data.current.last_updated_epoch * 1000).toISOString() : 
+      timestamp: data.current.last_updated_epoch ?
+        new Date(data.current.last_updated_epoch * 1000).toISOString() :
         new Date().toISOString()
     };
 

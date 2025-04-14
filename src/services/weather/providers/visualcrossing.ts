@@ -1,4 +1,5 @@
 import { GeoLocation, WeatherData } from '@/types/weather';
+import { fetchWithSSLSupport } from '@/utils/fetch-utils';
 
 class VisualCrossingService {
   async getCurrentWeather(
@@ -9,14 +10,14 @@ class VisualCrossingService {
     try {
       // Visual Crossing permite obtener datos actuales y pronóstico en una sola llamada
       const url = `${baseUrl}/${location.latitude},${location.longitude}?unitGroup=metric&include=current,days&key=${apiKey}&contentType=json`;
-      const response = await fetch(url);
-      
+      const response = await fetchWithSSLSupport(url);
+
       if (!response.ok) {
         throw new Error(`Error al obtener datos de Visual Crossing: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       // Transformar los datos al formato estándar
       return this.transformData(data, location);
     } catch (error) {
