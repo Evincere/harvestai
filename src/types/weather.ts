@@ -3,6 +3,7 @@ export interface WeatherData {
   location: GeoLocation;
   current: CurrentWeather;
   forecast?: ForecastWeather[];
+  alerts?: WeatherAlert[];
   source: string; // Nombre de la API que proporcionó los datos
 }
 
@@ -31,7 +32,18 @@ export interface ForecastWeather {
   humidity: number;
   uv_index: number;
   precipitation_probability: number;
+  hail_probability?: number; // Probabilidad de granizo (0-100)
   condition: string;
+}
+
+export interface WeatherAlert {
+  type: string; // Tipo de alerta (granizo, tormenta, etc.)
+  severity: 'minor' | 'moderate' | 'severe' | 'extreme'; // Severidad de la alerta
+  title: string; // Título descriptivo de la alerta
+  description: string; // Descripción detallada
+  start: string; // Fecha y hora de inicio (ISO string)
+  end: string; // Fecha y hora de fin (ISO string)
+  source?: string; // Fuente de la alerta (servicio meteorológico)
 }
 
 // Interfaz para el impacto del clima en el cultivo de cannabis
@@ -39,9 +51,11 @@ export interface WeatherImpact {
   temperature_impact: ImpactLevel;
   humidity_impact: ImpactLevel;
   uv_impact: ImpactLevel;
+  hail_impact?: ImpactLevel;
   overall_impact: ImpactLevel;
   recommendations: string[];
   harvest_adjustment_days?: number; // Ajuste recomendado en días (positivo = retrasar, negativo = adelantar)
+  alerts?: WeatherAlert[]; // Alertas activas que requieren atención
 }
 
 export enum ImpactLevel {

@@ -10,6 +10,8 @@ import { GeoLocation, ImpactLevel, WeatherData, WeatherImpact } from '@/types/we
 import { WeatherFallback } from './weather-fallback';
 import { WeatherChart } from './weather-chart';
 import { WeatherIcon } from './weather-icon';
+import { LocationSelector } from './location-selector';
+import { MapPin } from 'lucide-react';
 
 interface WeatherImpactProps {
   variety?: CannabisVariety;
@@ -17,6 +19,7 @@ interface WeatherImpactProps {
   weatherData?: WeatherData;
   weatherImpact?: WeatherImpact | { error: boolean; message: string };
   onRequestLocation: () => void;
+  onManualLocationSelected?: (location: GeoLocation) => void;
   isLoading: boolean;
 }
 
@@ -26,9 +29,11 @@ export function WeatherImpact({
   weatherData,
   weatherImpact,
   onRequestLocation,
+  onManualLocationSelected,
   isLoading
 }: WeatherImpactProps) {
   const [hasGeolocationPermission, setHasGeolocationPermission] = useState<boolean | null>(null);
+  const [showLocationSelector, setShowLocationSelector] = useState<boolean>(false);
 
   useEffect(() => {
     // Verificar si el navegador soporta geolocalización
@@ -45,15 +50,15 @@ export function WeatherImpact({
   const getImpactColor = (impact: ImpactLevel) => {
     switch (impact) {
       case ImpactLevel.POSITIVE:
-        return 'text-green-500';
+        return 'text-green-700 dark:text-green-400 font-bold';
       case ImpactLevel.NEUTRAL:
-        return 'text-yellow-500';
+        return 'text-yellow-700 dark:text-yellow-400 font-bold';
       case ImpactLevel.NEGATIVE:
-        return 'text-orange-500';
+        return 'text-orange-700 dark:text-orange-400 font-bold';
       case ImpactLevel.CRITICAL:
-        return 'text-red-500';
+        return 'text-red-700 dark:text-red-400 font-bold';
       default:
-        return 'text-gray-500';
+        return 'text-gray-700 dark:text-gray-400 font-bold';
     }
   };
 
@@ -73,21 +78,59 @@ export function WeatherImpact({
     }
   };
 
+  // Funciones para detectar condiciones climáticas específicas
+  const highHumidityDays = (impact: WeatherImpact): boolean => {
+    return impact.humidity_impact === ImpactLevel.NEGATIVE || impact.humidity_impact === ImpactLevel.CRITICAL;
+  };
+
+  const highTempDays = (impact: WeatherImpact): boolean => {
+    return impact.temperature_impact === ImpactLevel.NEGATIVE || impact.temperature_impact === ImpactLevel.CRITICAL;
+  };
+
+  const lowTempDays = (impact: WeatherImpact): boolean => {
+    // Asumimos temperaturas bajas cuando hay un impacto positivo (retraso en la cosecha)
+    return impact.harvest_adjustment_days > 0 && impact.temperature_impact !== ImpactLevel.CRITICAL;
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl">Impacto Climático en la Cosecha</CardTitle>
-        <CardDescription>
-          Análisis de condiciones climáticas actuales y su efecto en el momento óptimo de cosecha
-          {variety && ` para ${variety.name}`}
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-xl">Impacto Climático en la Cosecha</CardTitle>
+            <CardDescription>
+              Análisis de condiciones climáticas actuales y su efecto en el momento óptimo de cosecha
+              {variety && ` para ${variety.name}`}
+            </CardDescription>
+          </div>
+          {weatherData && weatherData.location && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-secondary/50 px-3 py-1 rounded-full text-sm">
+                <MapPin className="h-4 w-4 mr-1 text-primary" />
+                <span className="font-medium">
+                  {weatherData.location.name || `${weatherData.location.latitude.toFixed(2)}, ${weatherData.location.longitude.toFixed(2)}`}
+                  {weatherData.location.country && `, ${weatherData.location.country}`}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowLocationSelector(true)}
+                className="p-1 rounded-full hover:bg-secondary/50 transition-colors"
+                title="Cambiar ubicación"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {/* Si hay un error en el impacto climático, mostrar el mensaje de error */}
         {weatherImpact && 'error' in weatherImpact && weatherImpact.error && (
           <WeatherFallback
             onRequestLocation={onRequestLocation}
+            onManualLocationSelected={onManualLocationSelected}
             isLoading={isLoading}
+            currentLocation={weatherData?.location}
             error={weatherImpact.message}
           />
         )}
@@ -96,7 +139,9 @@ export function WeatherImpact({
         {!weatherData && (
           <WeatherFallback
             onRequestLocation={onRequestLocation}
+            onManualLocationSelected={onManualLocationSelected}
             isLoading={isLoading}
+            currentLocation={weatherData?.location}
             error={hasGeolocationPermission === false ?
               'Tu navegador no soporta geolocalización o has bloqueado el permiso. Activa la geolocalización en la configuración de tu navegador para usar esta función.' :
               undefined
@@ -104,8 +149,37 @@ export function WeatherImpact({
           />
         )}
 
+        {/* Selector de ubicación */}
+        {showLocationSelector && (
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-medium">Cambiar ubicación</h3>
+              <button
+                onClick={() => setShowLocationSelector(false)}
+                className="p-1 rounded-full hover:bg-secondary/50 transition-colors"
+                title="Cerrar selector de ubicación"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <LocationSelector
+              onLocationSelected={(location) => {
+                if (onManualLocationSelected) {
+                  onManualLocationSelected(location);
+                  setShowLocationSelector(false);
+                }
+              }}
+              onRequestAutoLocation={() => {
+                onRequestLocation();
+                setShowLocationSelector(false);
+              }}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
+
         {/* Si hay datos climáticos y no hay error, mostrar el análisis */}
-        {weatherData && weatherImpact && !('error' in weatherImpact) && (
+        {weatherData && weatherImpact && !('error' in weatherImpact) && !showLocationSelector && (
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">Resumen</TabsTrigger>
@@ -123,7 +197,7 @@ export function WeatherImpact({
                 <div>
                   <div className="text-xl font-bold">{weatherData.current.condition}</div>
                   <div className="text-sm text-muted-foreground">
-                    Ubicación: {weatherData.location.name || `${weatherData.location.latitude.toFixed(2)}, ${weatherData.location.longitude.toFixed(2)}`}
+                    {new Date(weatherData.current.timestamp).toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -145,6 +219,18 @@ export function WeatherImpact({
                   <span className="text-sm text-muted-foreground">Viento</span>
                   <span className="text-xl font-bold">{weatherData.current.wind_speed} km/h</span>
                 </div>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLocationSelector(true)}
+                  className="text-xs"
+                >
+                  <MapPin className="h-3 w-3 mr-1" />
+                  Cambiar ubicación
+                </Button>
               </div>
               <div className="mt-2 text-xs text-muted-foreground text-right">
                 Fuente: {weatherData.source} | Actualizado: {new Date(weatherData.current.timestamp).toLocaleString()}
@@ -173,6 +259,14 @@ export function WeatherImpact({
                     {weatherImpact.uv_impact.toUpperCase()}
                   </span>
                 </div>
+                {weatherImpact.hail_impact && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Impacto de granizo:</span>
+                    <span className={`font-medium ${getImpactColor(weatherImpact.hail_impact)}`}>
+                      {weatherImpact.hail_impact.toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="font-medium">Impacto general:</span>
                   <span className={`font-bold ${getImpactColor(weatherImpact.overall_impact)}`}>
@@ -182,14 +276,37 @@ export function WeatherImpact({
               </div>
             </div>
 
+            {/* Alertas meteorológicas */}
+            {weatherImpact.alerts && weatherImpact.alerts.length > 0 && (
+              <Alert variant="destructive" className="mb-4 border-red-600 bg-red-100 dark:bg-red-900/30">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-red-600"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <AlertTitle className="text-red-600 font-bold text-lg">¡ALERTA METEOROLÓGICA!</AlertTitle>
+                <AlertDescription className="text-red-600">
+                  <p className="font-medium mb-2">Se han detectado las siguientes alertas que podrían afectar a tus plantas:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {weatherImpact.alerts.map((alert, index) => (
+                      <li key={index} className="font-medium">
+                        {alert.type === 'hail' ? '🧊 ALERTA DE GRANIZO: ' : '⚠️ '}
+                        {alert.title} - {alert.description.substring(0, 100)}{alert.description.length > 100 ? '...' : ''}
+                        <span className="block text-xs mt-1">
+                          Desde: {new Date(alert.start).toLocaleString()} hasta: {new Date(alert.end).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 font-bold">Revisa las recomendaciones para proteger tus plantas.</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Ajuste de tiempo de cosecha */}
             {weatherImpact.harvest_adjustment_days !== undefined && (
               <div className={`rounded-lg p-4 shadow-sm ${
                 weatherImpact.harvest_adjustment_days === -999 ?
-                'bg-red-200 dark:bg-red-900/40 border border-red-500' :
+                'bg-red-200 dark:bg-red-900/40 border border-red-500 text-red-900 dark:text-red-100' :
                 weatherImpact.harvest_adjustment_days < 0 ?
-                'bg-orange-200 dark:bg-orange-900/40 border border-orange-500' :
-                'bg-green-200 dark:bg-green-900/40 border border-green-500'
+                'bg-orange-200 dark:bg-orange-900/40 border border-orange-500 text-orange-900 dark:text-orange-100' :
+                'bg-green-200 dark:bg-green-900/40 border border-green-500 text-green-900 dark:text-green-100'
               }`}>
                 <div className="flex items-start gap-2">
                   {getImpactIcon(
@@ -200,7 +317,7 @@ export function WeatherImpact({
                     ImpactLevel.POSITIVE
                   )}
                   <div>
-                    <h3 className="text-lg font-medium text-foreground">
+                    <h3 className="text-lg font-bold">
                       {weatherImpact.harvest_adjustment_days === -999
                         ? 'Cosecha Inmediata Recomendada'
                         : weatherImpact.harvest_adjustment_days < 0
@@ -209,12 +326,18 @@ export function WeatherImpact({
                             ? `Retrasar cosecha ${weatherImpact.harvest_adjustment_days} días`
                             : 'No se requiere ajuste de cosecha'}
                     </h3>
-                    <p className="text-sm mt-1 font-medium text-foreground">
+                    <p className="text-sm mt-1 font-medium">
                       {weatherImpact.harvest_adjustment_days === -999
                         ? 'Las condiciones climáticas son críticas. Se recomienda cosechar inmediatamente para evitar daños.'
                         : weatherImpact.harvest_adjustment_days < 0
-                          ? 'Las condiciones climáticas previstas podrían afectar negativamente a la planta. Se recomienda adelantar la cosecha.'
-                          : 'Las condiciones climáticas son favorables para el desarrollo óptimo de la planta.'}
+                          ? weatherImpact.harvest_adjustment_days <= -3
+                            ? `Se detectaron ${highHumidityDays(weatherImpact) ? 'altos niveles de humedad' : highTempDays(weatherImpact) ? 'temperaturas elevadas' : 'condiciones adversas'} en el pronóstico. Se recomienda adelantar la cosecha para evitar problemas de moho o deterioro.`
+                            : `Las condiciones climáticas previstas podrían afectar negativamente a la planta. Se recomienda adelantar ligeramente la cosecha como medida preventiva.`
+                          : weatherImpact.harvest_adjustment_days >= 3
+                            ? `Se detectaron ${lowTempDays(weatherImpact) ? 'temperaturas bajas' : 'condiciones que ralentizan la maduración'} en el pronóstico. Un periodo adicional de desarrollo beneficiará la calidad final.`
+                            : weatherImpact.harvest_adjustment_days > 0
+                              ? 'Las condiciones climáticas favorecen un desarrollo más prolongado. Un tiempo adicional permitirá mayor desarrollo de cannabinoides.'
+                              : 'Las condiciones climáticas actuales son óptimas para el desarrollo de la planta. Mantén el plan de cosecha original.'}
                     </p>
                   </div>
                 </div>
@@ -254,6 +377,11 @@ export function WeatherImpact({
                         {day.precipitation_probability > 30 && (
                           <span className="text-xs text-blue-500 mt-1">
                             {day.precipitation_probability}% lluvia
+                          </span>
+                        )}
+                        {day.hail_probability && day.hail_probability > 0 && (
+                          <span className="text-xs text-red-500 font-bold mt-1">
+                            {day.hail_probability}% granizo
                           </span>
                         )}
                       </div>
@@ -311,6 +439,12 @@ export function WeatherImpact({
                               <div className="flex justify-between text-blue-500">
                                 <span>Lluvia:</span>
                                 <span className="font-medium">{day.precipitation_probability}%</span>
+                              </div>
+                            )}
+                            {day.hail_probability && day.hail_probability > 0 && (
+                              <div className="flex justify-between text-red-500">
+                                <span>Granizo:</span>
+                                <span className="font-medium">{day.hail_probability}%</span>
                               </div>
                             )}
                           </div>
@@ -377,6 +511,20 @@ export function WeatherImpact({
                             weatherImpact.uv_impact === ImpactLevel.NEGATIVE ?
                             'La radiación UV no es óptima. Ajusta la exposición a la luz.' :
                             'El nivel UV está ligeramente fuera del rango ideal. Monitorea el desarrollo de la planta.'
+                          }
+                        </span>
+                      </li>
+                    )}
+
+                    {weatherImpact.hail_impact && (
+                      <li className="flex items-start gap-2">
+                        <span className="font-medium text-red-600">Alerta de granizo:</span>
+                        <span className="text-red-600">
+                          {weatherImpact.hail_impact === ImpactLevel.CRITICAL ?
+                            '¡PELIGRO! Hay una alta probabilidad de granizo severo. Toma medidas inmediatas para proteger tus plantas o considera cosechar si están cerca del punto óptimo.' :
+                            weatherImpact.hail_impact === ImpactLevel.NEGATIVE ?
+                            'Hay riesgo de granizo en los próximos días. Prepara protecciones como lonas, mallas antigranizo o coberturas temporales.' :
+                            'Existe una baja probabilidad de granizo. Mantén preparadas protecciones por si acaso.'
                           }
                         </span>
                       </li>
