@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * API route que actúa como proxy para peticiones a APIs externas
- * Solo para uso en desarrollo - NO usar en producción
+ * Solo se usa en entorno empresarial cuando es necesario
  */
 export async function GET(request: NextRequest) {
   // Obtener la URL de la query
@@ -21,12 +21,13 @@ export async function GET(request: NextRequest) {
     if (process.env.NODE_ENV === 'development') {
       // Configurar temporalmente NODE_TLS_REJECT_UNAUTHORIZED=0 para esta petición
       // ADVERTENCIA: Esto es inseguro y solo debe usarse en desarrollo
+      const originalValue = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       
       const response = await fetch(url);
       
       // Restaurar la configuración de seguridad
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalValue;
       
       // Obtener los datos de la respuesta
       const data = await response.json();

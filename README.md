@@ -91,19 +91,48 @@ HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores d
 ## Configuración
 
 ### Variables de Entorno
+El proyecto utiliza un archivo `.env` para las variables de entorno. Este archivo está incluido en `.gitignore` y no se sube al repositorio por razones de seguridad.
+
+**Importante**: Después de clonar el repositorio o hacer un `git pull`, deberás crear o restaurar tu archivo `.env` manualmente. Para facilitar este proceso, hemos incluido un archivo `.env.example` que puedes copiar:
+
+```bash
+# Copiar el archivo de ejemplo (solo necesitas hacer esto una vez)
+cp .env.example .env
+
+# Luego edita el archivo .env con tus propias claves API
+```
+
+Variables de entorno necesarias:
 ```
 GOOGLE_GENAI_API_KEY=tu_api_key_de_google_ai
+NEXT_PUBLIC_ENABLE_CLIENT_AI=true
+NEXT_PUBLIC_APP_VERSION=0.1.0
+
+# APIs de clima
 OPENWEATHERMAP_API_KEY=tu_api_key_de_openweathermap
+VISUALCROSSING_API_KEY=tu_api_key_de_visualcrossing
+WEATHERAPI_KEY=tu_api_key_de_weatherapi
+AERISWEATHER_CLIENT_ID=tu_client_id_de_aerisweather
+AERISWEATHER_CLIENT_SECRET=tu_client_secret_de_aerisweather
+
+# Configuración de la aplicación
+NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_ENABLE_CLIENT_AI=false
+NEXT_PUBLIC_ENABLE_GEOLOCATION=true
 ```
 
 ### Instalación
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/harvestai.git
+git clone https://github.com/Evincere/harvestai.git
 
 # Instalar dependencias
 cd harvestai
 npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Edita el archivo .env con tus propias claves API
 
 # Iniciar en modo desarrollo
 npm run dev
