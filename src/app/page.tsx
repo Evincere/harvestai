@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Icons } from '@/components/icons';
 import { Badge } from "@/components/ui/badge";
 import { AnalyzeCannabisImageOutput } from '@/ai/flows/analyze-cannabis-image';
 import { CannabisPreferences } from '@/components/cannabis-preferences';

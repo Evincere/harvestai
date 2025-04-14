@@ -3,6 +3,15 @@
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 
+import {
+  CloudIcon,
+  EyeIcon,
+  HomeIcon,
+  SettingsIcon,
+  SunIcon,
+} from "@/components/icons"
+import { useIsMobile } from "@/hooks/use-mobile";
+
 import { cn } from "@/lib/utils"
 
 const Tabs = TabsPrimitive.Root
@@ -14,7 +23,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground scroll-m-4 overflow-x-auto snap-x",
+      "flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground scroll-m-4 overflow-x-auto snap-x",
       className
     )}
     {...props}
@@ -25,16 +34,39 @@ TabsList.displayName = TabsPrimitive.List.displayName
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm w-fit snap-start",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, value, children, ...props }, ref) => {
+  const isMobile = useIsMobile();
+
+  const iconsMap: Record<string, React.ReactNode> = {
+    General: <HomeIcon className="h-4 w-4" aria-label="General" />,
+    Preferencias: <SettingsIcon className="h-4 w-4" aria-label="Preferencias" />,
+    Microscópico: <EyeIcon className="h-4 w-4" aria-label="Microscópico" />,
+    Clima: <CloudIcon className="h-4 w-4" aria-label="Clima" />,
+    "Clima Real": <SunIcon className="h-4 w-4" aria-label="Clima Real" />,
+  };
+
+  let content: React.ReactNode;
+  if (isMobile) {
+    content = <div className="h-4 w-4">{iconsMap[value as string]}</div>;
+  } else {
+    content = <div>{children}</div>;
+  }
+
+  return (
+    <TabsPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm w-fit snap-start",
+        isMobile ? "px-2" : "",
+        className
+      )}
+      {...props}
+    >
+      {content}
+    </TabsPrimitive.Trigger>
+  );
+}
+);
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
 const TabsContent = React.forwardRef<
