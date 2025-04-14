@@ -20,7 +20,7 @@ import { GeoLocation, WeatherData, WeatherImpact as WeatherImpactType } from '@/
 import { ExifService } from '@/services/geo/exif-service';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Home, Settings, Search, Cloud, MapPin } from "lucide-react";
-
+import { Spinner } from '@/components/icons';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -437,10 +437,10 @@ export default function HomePage() {
                     className="w-full"
                   >
                     {loading ? (
-                      <>
-                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                      <div className="flex items-center justify-center">
+                        <Spinner className="mr-2 h-4 w-4 animate-spin" />
                         Analizando...
-                      </>
+                      </div>
                     ) : (
                       'Analizar'
                     )}
@@ -452,17 +452,18 @@ export default function HomePage() {
                     disabled={loadingWeather}
                     className="w-full sm:w-auto"
                   >
-                    {loadingWeather ? (
-                      <>
-                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                        Obteniendo ubicación...
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        Usar ubicación
-                      </>
-                    )}
+                  {loadingWeather ? (
+                    <div className="flex items-center justify-center">
+                      <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                      Obteniendo ubicación...
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      Usar ubicación
+                    </div>
+                  )}
+
                   </Button>
                 </div>
               </CardContent>
