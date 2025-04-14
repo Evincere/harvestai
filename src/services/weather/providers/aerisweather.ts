@@ -1,4 +1,5 @@
 import { GeoLocation, WeatherData } from '@/types/weather';
+import { fetchWithSSLSupport } from '@/utils/fetch-utils';
 
 class AerisWeatherService {
   async getCurrentWeather(
@@ -10,7 +11,7 @@ class AerisWeatherService {
     try {
       // Obtener datos actuales
       const currentUrl = `${baseUrl}/observations/${location.latitude},${location.longitude}?client_id=${clientId}&client_secret=${clientSecret}&format=json`;
-      const currentResponse = await fetch(currentUrl);
+      const currentResponse = await fetchWithSSLSupport(currentUrl);
 
       if (!currentResponse.ok) {
         throw new Error(`Error al obtener datos de Aeris Weather: ${currentResponse.statusText}`);
@@ -20,7 +21,7 @@ class AerisWeatherService {
 
       // Obtener pronóstico
       const forecastUrl = `${baseUrl}/forecasts/${location.latitude},${location.longitude}?client_id=${clientId}&client_secret=${clientSecret}&format=json&filter=day&limit=7`;
-      const forecastResponse = await fetch(forecastUrl);
+      const forecastResponse = await fetchWithSSLSupport(forecastUrl);
 
       if (!forecastResponse.ok) {
         throw new Error(`Error al obtener pronóstico de Aeris Weather: ${forecastResponse.statusText}`);

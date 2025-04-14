@@ -20,6 +20,7 @@ import { CANNABIS_VARIETIES, CannabisVariety, DEFAULT_PREFERENCES, UserPreferenc
 import { GeoLocation, WeatherData, WeatherImpact as WeatherImpactType } from '@/types/weather';
 import { ExifService } from '@/services/geo/exif-service';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Home, Settings, Search, Cloud, MapPin } from "lucide-react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -38,7 +39,7 @@ const RIPENESS_CRITERIA = {
   }
 };
 
-export default function Home() {
+export default function HomePage() {
   // Estados básicos
   const [image, setImage] = useState<string | null>(null);
   const [microscopicImage, setMicroscopicImage] = useState<string | null>(null);
@@ -351,20 +352,31 @@ export default function Home() {
         {/* Pestañas para navegación */}
         <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="preferences">Preferencias</TabsTrigger>
+            <TabsTrigger value="general">
+              <span className="hidden sm:inline">General</span>
+              <Home className="w-5 h-5 inline-flex sm:hidden" />
+            </TabsTrigger>
+            <TabsTrigger value="preferences">
+              <span className="hidden sm:inline">Preferencias</span>
+              <Settings className="w-5 h-5 inline-flex sm:hidden" />
+            </TabsTrigger>
             <TabsTrigger
               value="microscopic"
               disabled={!preferences.useMicroscopicAnalysis}
             >
-              Microscópico
+              <span className="hidden sm:inline">Microscópico</span>
+              <Search className="w-5 h-5 inline-flex sm:hidden" />
             </TabsTrigger>
-            <TabsTrigger value="climate">Clima</TabsTrigger>
+            <TabsTrigger value="climate">
+              <span className="hidden sm:inline">Clima</span>
+              <Cloud className="w-5 h-5 inline-flex sm:hidden" />
+            </TabsTrigger>
             <TabsTrigger
               value="weather"
               disabled={!weatherData}
             >
-              Clima Real
+              <span className="hidden sm:inline">Clima Real</span>
+              <MapPin className="w-5 h-5 inline-flex sm:hidden" />
             </TabsTrigger>
           </TabsList>
 

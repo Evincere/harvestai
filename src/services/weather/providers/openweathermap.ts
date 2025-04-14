@@ -1,4 +1,5 @@
 import { GeoLocation, WeatherData } from '@/types/weather';
+import { fetchWithSSLSupport } from '@/utils/fetch-utils';
 
 class OpenWeatherMapService {
   async getCurrentWeather(
@@ -9,7 +10,7 @@ class OpenWeatherMapService {
     try {
       // Obtener datos actuales
       const currentUrl = `${baseUrl}/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${apiKey}&units=metric`;
-      const currentResponse = await fetch(currentUrl);
+      const currentResponse = await fetchWithSSLSupport(currentUrl);
 
       if (!currentResponse.ok) {
         throw new Error(`Error al obtener datos de OpenWeatherMap: ${currentResponse.statusText}`);
@@ -19,7 +20,7 @@ class OpenWeatherMapService {
 
       // Obtener pronóstico de 5 días
       const forecastUrl = `${baseUrl}/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${apiKey}&units=metric`;
-      const forecastResponse = await fetch(forecastUrl);
+      const forecastResponse = await fetchWithSSLSupport(forecastUrl);
 
       if (!forecastResponse.ok) {
         throw new Error(`Error al obtener pronóstico de OpenWeatherMap: ${forecastResponse.statusText}`);
@@ -32,7 +33,7 @@ class OpenWeatherMapService {
       try {
         // One Call API incluye alertas meteorológicas
         const oneCallUrl = `${baseUrl}/onecall?lat=${location.latitude}&lon=${location.longitude}&exclude=minutely,hourly&appid=${apiKey}&units=metric`;
-        const alertsResponse = await fetch(oneCallUrl);
+        const alertsResponse = await fetchWithSSLSupport(oneCallUrl);
 
         if (alertsResponse.ok) {
           alertsData = await alertsResponse.json();
