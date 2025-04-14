@@ -17,7 +17,8 @@ export class WeatherImpactService {
   analyzeWeatherImpact(
     weatherData: WeatherData,
     variety: CannabisVariety,
-    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío'
+    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío',
+    userPreferences?: { harvestPreference?: 'Energético' | 'Equilibrado' | 'Relajante' }
   ): WeatherImpact {
     // Determinar la etapa de floración basada en el nivel de madurez
     const floweringStage = this.getFloweringStage(ripenessLevel);
@@ -42,12 +43,22 @@ export class WeatherImpactService {
       floweringStage
     );
 
+    // Analizar el impacto del granizo (si hay datos disponibles)
+    const hailImpact = this.analyzeHailImpact(
+      weatherData,
+      ripenessLevel
+    );
+
     // Determinar el impacto general
     const overallImpact = this.determineOverallImpact(
       temperatureImpact,
       humidityImpact,
-      uvImpact
+      uvImpact,
+      hailImpact
     );
+
+    // Filtrar alertas relevantes
+    const relevantAlerts = this.filterRelevantAlerts(weatherData.alerts);
 
     // Generar recomendaciones
     const recommendations = this.generateRecommendations(
@@ -56,23 +67,27 @@ export class WeatherImpactService {
       uvImpact,
       weatherData,
       variety,
-      ripenessLevel
+      ripenessLevel,
+      hailImpact
     );
 
     // Calcular ajuste de días hasta la cosecha
     const harvestAdjustment = this.calculateHarvestAdjustment(
       overallImpact,
       weatherData,
-      ripenessLevel
+      ripenessLevel,
+      userPreferences?.harvestPreference
     );
 
     return {
       temperature_impact: temperatureImpact,
       humidity_impact: humidityImpact,
       uv_impact: uvImpact,
+      hail_impact: hailImpact,
       overall_impact: overallImpact,
       recommendations,
-      harvest_adjustment_days: harvestAdjustment
+      harvest_adjustment_days: harvestAdjustment,
+      alerts: relevantAlerts?.length > 0 ? relevantAlerts : undefined
     };
   }
 
@@ -223,7 +238,8 @@ export class WeatherImpactService {
   private determineOverallImpact(
     temperatureImpact: ImpactLevel,
     humidityImpact: ImpactLevel,
-    uvImpact: ImpactLevel
+    uvImpact: ImpactLevel,
+    hailImpact?: ImpactLevel
   ): ImpactLevel {
     // Contar el número de cada tipo de impacto
     const impactCounts = {
@@ -233,9 +249,21 @@ export class WeatherImpactService {
       [ImpactLevel.POSITIVE]: 0
     };
 
-    [temperatureImpact, humidityImpact, uvImpact].forEach(impact => {
+    const impacts = [temperatureImpact, humidityImpact, uvImpact];
+
+    // Añadir impacto de granizo si está disponible
+    if (hailImpact) {
+      impacts.push(hailImpact);
+    }
+
+    impacts.forEach(impact => {
       impactCounts[impact]++;
     });
+
+    // Si hay alerta de granizo crítica, el impacto general es crítico
+    if (hailImpact === ImpactLevel.CRITICAL) {
+      return ImpactLevel.CRITICAL;
+    }
 
     // Determinar el impacto general
     if (impactCounts[ImpactLevel.CRITICAL] > 0) {
@@ -258,7 +286,8 @@ export class WeatherImpactService {
     uvImpact: ImpactLevel,
     weatherData: WeatherData,
     variety: CannabisVariety,
-    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío'
+    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío',
+    hailImpact?: ImpactLevel
   ): string[] {
     const recommendations: string[] = [];
     const floweringStage = this.getFloweringStage(ripenessLevel);
@@ -430,11 +459,55 @@ export class WeatherImpactService {
       );
     }
 
+    // Recomendaciones específicas para granizo
+    if (hailImpact === ImpactLevel.CRITICAL || hailImpact === ImpactLevel.NEGATIVE) {
+      // Verificar si hay alertas de granizo activas
+      const hailAlerts = weatherData.alerts?.filter(alert =>
+        alert.type === 'hail' ||
+        alert.description.toLowerCase().includes('granizo') ||
+        alert.description.toLowerCase().includes('hail')
+      ) || [];
+
+      if (hailAlerts.length > 0) {
+        // Alerta de granizo activa
+        if (ripenessLevel === 'Tardío') {
+          recommendations.unshift(
+            `¡ALERTA URGENTE! Se ha detectado una alerta de granizo en tu zona. El granizo puede destruir completamente tu cosecha de ${variety.name} que está en etapa tardía de floración. ACCIONES INMEDIATAS: Si es posible, cosecha AHORA para evitar pérdidas totales. Si no puedes cosechar, protege tus plantas con lonas, mallas antigranizo o cualquier cobertura disponible. Mueve las plantas en macetas a un lugar protegido si es posible.`
+          );
+        } else if (ripenessLevel === 'Medio') {
+          recommendations.unshift(
+            `¡ALERTA IMPORTANTE! Se ha detectado una alerta de granizo en tu zona. El granizo puede causar daños severos a tu ${variety.name} en etapa media de floración. ACCIONES RECOMENDADAS: Protege tus plantas con lonas, mallas antigranizo o cualquier cobertura disponible. Mueve las plantas en macetas a un lugar protegido si es posible. Prepara soportes adicionales para las ramas en caso de que se debiliten por el impacto.`
+          );
+        } else {
+          recommendations.unshift(
+            `¡ALERTA! Se ha detectado una alerta de granizo en tu zona. El granizo puede dañar tu ${variety.name} en etapa temprana de floración. ACCIONES RECOMENDADAS: Protege tus plantas con lonas, mallas antigranizo o cualquier cobertura disponible. Las plantas en esta etapa pueden recuperarse mejor de los daños, pero es importante minimizar el impacto.`
+          );
+        }
+      } else {
+        // Alta probabilidad de granizo en el pronóstico
+        const maxHailProbability = Math.max(
+          ...weatherData.forecast?.slice(0, 3).map(day => day.hail_probability || 0) || [0]
+        );
+
+        if (maxHailProbability >= 70) {
+          recommendations.unshift(
+            `¡ADVERTENCIA! Hay una alta probabilidad (${maxHailProbability}%) de granizo en los próximos días. Prepara protecciones para tus plantas de ${variety.name} como lonas, mallas antigranizo o coberturas temporales. ${ripenessLevel === 'Tardío' ? 'Considera cosechar anticipadamente si las plantas están cerca de su punto óptimo.' : 'Asegura las plantas y prepara soportes adicionales para prevenir daños.'}`
+          );
+        } else if (maxHailProbability >= 40) {
+          recommendations.unshift(
+            `Atención: Existe una probabilidad moderada (${maxHailProbability}%) de granizo en los próximos días. Mantén preparadas protecciones para tus plantas de ${variety.name} y monitorea los pronósticos meteorológicos con frecuencia.`
+          );
+        }
+      }
+    }
+
     // Si no hay recomendaciones específicas, agregar una general
     if (recommendations.length === 0) {
       if (temperatureImpact === ImpactLevel.POSITIVE &&
         humidityImpact === ImpactLevel.POSITIVE &&
-        uvImpact === ImpactLevel.POSITIVE) {
+        uvImpact === ImpactLevel.POSITIVE &&
+        hailImpact !== ImpactLevel.NEGATIVE &&
+        hailImpact !== ImpactLevel.CRITICAL) {
         recommendations.push(
           'Las condiciones climáticas actuales son óptimas para el desarrollo de la planta en su etapa actual.'
         );
@@ -454,7 +527,8 @@ export class WeatherImpactService {
   private calculateHarvestAdjustment(
     overallImpact: ImpactLevel,
     weatherData: WeatherData,
-    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío'
+    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío',
+    harvestPreference?: 'Energético' | 'Equilibrado' | 'Relajante'
   ): number {
     // No ajustar si no hay pronóstico disponible
     if (!weatherData.forecast || weatherData.forecast.length === 0) {
@@ -519,6 +593,168 @@ export class WeatherImpactService {
       adjustment = Math.max(adjustment, -5);
     }
 
+    // Ajustar según la preferencia del usuario
+    if (harvestPreference) {
+      if (harvestPreference === 'Energético') {
+        // Para efectos energéticos, se prefiere cosechar antes
+        // Reducir el tiempo de espera
+        adjustment -= 2;
+
+        // Si está en etapa tardía, recomendar cosecha inmediata
+        if (ripenessLevel === 'Tardío') {
+          return -999; // Código especial para indicar cosecha inmediata
+        }
+      } else if (harvestPreference === 'Relajante') {
+        // Para efectos relajantes, se prefiere esperar más
+        // Aumentar el tiempo de espera si no hay condiciones críticas
+        if (overallImpact !== ImpactLevel.CRITICAL && overallImpact !== ImpactLevel.NEGATIVE) {
+          adjustment += 3;
+        }
+
+        // Pero no recomendar esperar si hay condiciones adversas
+        if (overallImpact === ImpactLevel.NEGATIVE) {
+          adjustment = Math.min(adjustment, 0);
+        }
+      }
+      // Para 'Equilibrado' no hacemos ajustes adicionales
+    }
+
     return adjustment;
+  }
+
+  /**
+   * Analiza el impacto del granizo en el cultivo
+   */
+  private analyzeHailImpact(
+    weatherData: WeatherData,
+    ripenessLevel: 'Temprano' | 'Medio' | 'Tardío'
+  ): ImpactLevel | undefined {
+    // Si no hay alertas o pronóstico, no hay impacto de granizo
+    if (!weatherData.alerts && (!weatherData.forecast || weatherData.forecast.length === 0)) {
+      return undefined;
+    }
+
+    // Verificar si hay alertas de granizo
+    if (weatherData.alerts && weatherData.alerts.length > 0) {
+      const hailAlerts = weatherData.alerts.filter(alert =>
+        alert.type === 'hail' ||
+        alert.description.toLowerCase().includes('granizo') ||
+        alert.description.toLowerCase().includes('hail')
+      );
+
+      if (hailAlerts.length > 0) {
+        // Determinar el nivel de impacto basado en la severidad de la alerta
+        const mostSevereAlert = hailAlerts.reduce((prev, current) => {
+          const severityRank = {
+            'minor': 1,
+            'moderate': 2,
+            'severe': 3,
+            'extreme': 4
+          };
+
+          return severityRank[current.severity] > severityRank[prev.severity] ? current : prev;
+        }, hailAlerts[0]);
+
+        switch (mostSevereAlert.severity) {
+          case 'extreme':
+            return ImpactLevel.CRITICAL;
+          case 'severe':
+            return ImpactLevel.CRITICAL;
+          case 'moderate':
+            return ImpactLevel.NEGATIVE;
+          case 'minor':
+            return ImpactLevel.NEUTRAL;
+          default:
+            return ImpactLevel.NEUTRAL;
+        }
+      }
+    }
+
+    // Verificar si hay probabilidad de granizo en el pronóstico
+    if (weatherData.forecast && weatherData.forecast.length > 0) {
+      // Buscar la probabilidad más alta de granizo en los próximos días
+      const maxHailProbability = Math.max(
+        ...weatherData.forecast
+          .slice(0, 3) // Considerar solo los próximos 3 días
+          .map(day => day.hail_probability || 0)
+      );
+
+      // Determinar el impacto basado en la probabilidad y el nivel de madurez
+      if (maxHailProbability >= 70) {
+        return ripenessLevel === 'Tardío' ? ImpactLevel.CRITICAL : ImpactLevel.NEGATIVE;
+      } else if (maxHailProbability >= 40) {
+        return ripenessLevel === 'Tardío' ? ImpactLevel.NEGATIVE : ImpactLevel.NEUTRAL;
+      } else if (maxHailProbability >= 20) {
+        return ImpactLevel.NEUTRAL;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Filtra las alertas relevantes para el cultivo de cannabis
+   */
+  private filterRelevantAlerts(alerts?: any[]): any[] {
+    if (!alerts || !Array.isArray(alerts) || alerts.length === 0) {
+      return [];
+    }
+
+    // Filtrar alertas relevantes para el cultivo de cannabis
+    return alerts.filter(alert => {
+      const type = alert.type?.toLowerCase() || '';
+      const description = alert.description?.toLowerCase() || '';
+      const title = alert.title?.toLowerCase() || '';
+
+      // Alertas de granizo son siempre relevantes
+      if (type === 'hail' || description.includes('granizo') || description.includes('hail')) {
+        return true;
+      }
+
+      // Alertas de tormentas severas
+      if (
+        type.includes('thunderstorm') ||
+        type.includes('storm') ||
+        description.includes('tormenta') ||
+        description.includes('storm')
+      ) {
+        return true;
+      }
+
+      // Alertas de viento fuerte
+      if (
+        type.includes('wind') ||
+        description.includes('viento') ||
+        description.includes('wind') ||
+        title.includes('viento') ||
+        title.includes('wind')
+      ) {
+        return true;
+      }
+
+      // Alertas de temperaturas extremas
+      if (
+        type.includes('temperature') ||
+        type.includes('heat') ||
+        type.includes('cold') ||
+        description.includes('temperatura') ||
+        description.includes('calor') ||
+        description.includes('frío')
+      ) {
+        return true;
+      }
+
+      // Alertas de lluvia intensa o inundaciones
+      if (
+        type.includes('rain') ||
+        type.includes('flood') ||
+        description.includes('lluvia') ||
+        description.includes('inundación')
+      ) {
+        return true;
+      }
+
+      return false;
+    });
   }
 }

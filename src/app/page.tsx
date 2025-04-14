@@ -15,6 +15,7 @@ import { WeatherImpact } from '@/components/weather-impact';
 import { WeatherFallback } from '@/components/weather-fallback';
 import { WeatherPreferences } from '@/components/weather-preferences';
 import { ApiKeyWarning } from '@/components/api-key-warning';
+import { CameraCapture } from '@/components/camera-capture';
 import { CANNABIS_VARIETIES, CannabisVariety, DEFAULT_PREFERENCES, UserPreferences, getCustomizedRecommendation } from '@/types/cannabis';
 import { GeoLocation, WeatherData, WeatherImpact as WeatherImpactType } from '@/types/weather';
 import { ExifService } from '@/services/geo/exif-service';
@@ -58,6 +59,26 @@ export default function Home() {
   const [weatherImpact, setWeatherImpact] = useState<WeatherImpactType | undefined>(undefined);
   const [hasGeolocationPermission, setHasGeolocationPermission] = useState<boolean | null>(null);
 
+  // Estados para la captura de imágenes con cámara
+  const [cameraOpen, setCameraOpen] = useState<boolean>(false);
+  const [microscopicCameraOpen, setMicroscopicCameraOpen] = useState<boolean>(false);
+
+  // Función para manejar la ubicación seleccionada (automática o manual)
+  const handleLocationSelected = (location: GeoLocation) => {
+    setUserLocation(location);
+    setActiveTab('weather');
+
+    // Mostrar mensaje de éxito
+    toast({
+      title: 'Ubicación configurada',
+      description: location.name
+        ? `Se usará ${location.name} para el análisis climático.`
+        : 'Se ha configurado la ubicación para mejorar el análisis.'
+    });
+
+    setLoadingWeather(false);
+  };
+
   // Función para solicitar la ubicación del usuario
   const requestLocation = useCallback(() => {
     setLoadingWeather(true);
@@ -79,16 +100,7 @@ export default function Home() {
           longitude: position.coords.longitude
         };
 
-        setUserLocation(location);
-        setActiveTab('weather');
-
-        // Mostrar mensaje de éxito
-        toast({
-          title: 'Ubicación obtenida',
-          description: 'Se ha obtenido tu ubicación para mejorar el análisis.'
-        });
-
-        setLoadingWeather(false);
+        handleLocationSelected(location);
       },
       (error) => {
         console.error('Error al obtener la ubicación:', error);
@@ -105,7 +117,7 @@ export default function Home() {
         maximumAge: 0
       }
     );
-  }, [toast, setLoadingWeather, setUserLocation, setActiveTab]);
+  }, [toast, setLoadingWeather]);
 
   // Verificar si el navegador soporta geolocalización
   useEffect(() => {
@@ -137,6 +149,7 @@ export default function Home() {
     }
   };
 
+  // Función para manejar la carga de imágenes desde archivo
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, isMicroscopic: boolean = false) => {
     const file = event.target.files?.[0];
 
@@ -165,51 +178,7 @@ export default function Home() {
       // Procesar imagen
       const reader = new FileReader();
       reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          // Validar dimensiones mínimas (menos estrictas para imágenes microscópicas)
-          const minWidth = isMicroscopic ? 200 : 300;
-          const minHeight = isMicroscopic ? 200 : 300;
-
-          // Intentar extraer datos de geolocalización de la imagen
-          if (!isMicroscopic && !userLocation) {
-            const exifService = new ExifService();
-            exifService.extractGeoLocation(reader.result as string)
-              .then(location => {
-                if (location) {
-                  setUserLocation(location);
-                  toast({
-                    title: 'Ubicación detectada',
-                    description: 'Se ha detectado la ubicación de la imagen para mejorar el análisis.',
-                  });
-                }
-              })
-              .catch(error => {
-                console.error('Error al extraer datos EXIF:', error);
-              });
-          }
-
-          if (img.width < minWidth || img.height < minHeight) {
-            toast({
-              variant: 'destructive',
-              title: 'Imagen muy pequeña',
-              description: `La imagen debe ser al menos de ${minWidth}x${minHeight} píxeles.`
-            });
-            return;
-          }
-
-          // Guardar la imagen en el estado correspondiente
-          if (isMicroscopic) {
-            setMicroscopicImage(reader.result as string);
-            toast({
-              title: 'Imagen microscópica cargada',
-              description: 'La imagen de tricomas se ha cargado correctamente.'
-            });
-          } else {
-            setImage(reader.result as string);
-          }
-        };
-        img.src = reader.result as string;
+        processImageData(reader.result as string, isMicroscopic);
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -221,33 +190,85 @@ export default function Home() {
     }
   };
 
+  // Función para manejar la captura de imágenes desde la cámara
+  const handleCameraCapture = (imageDataUrl: string, isMicroscopic: boolean = false) => {
+    processImageData(imageDataUrl, isMicroscopic);
+  };
+
+  // Función para procesar los datos de la imagen (común para archivo y cámara)
+  const processImageData = (imageDataUrl: string, isMicroscopic: boolean = false) => {
+    const img = new Image();
+    img.onload = () => {
+      // Validar dimensiones mínimas (menos estrictas para imágenes microscópicas)
+      const minWidth = isMicroscopic ? 200 : 300;
+      const minHeight = isMicroscopic ? 200 : 300;
+
+      // Intentar extraer datos de geolocalización de la imagen (solo para imágenes normales)
+      if (!isMicroscopic && !userLocation) {
+        const exifService = new ExifService();
+        exifService.extractGeoLocation(imageDataUrl)
+          .then(location => {
+            if (location) {
+              setUserLocation(location);
+              toast({
+                title: 'Ubicación detectada',
+                description: 'Se ha detectado la ubicación de la imagen para mejorar el análisis.',
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error al extraer datos EXIF:', error);
+          });
+      }
+
+      if (img.width < minWidth || img.height < minHeight) {
+        toast({
+          variant: 'destructive',
+          title: 'Imagen muy pequeña',
+          description: `La imagen debe ser al menos de ${minWidth}x${minHeight} píxeles.`
+        });
+        return;
+      }
+
+      // Guardar la imagen en el estado correspondiente
+      if (isMicroscopic) {
+        setMicroscopicImage(imageDataUrl);
+        toast({
+          title: 'Imagen microscópica cargada',
+          description: 'La imagen de tricomas se ha cargado correctamente.'
+        });
+      } else {
+        setImage(imageDataUrl);
+        toast({
+          title: 'Imagen cargada',
+          description: 'La imagen se ha cargado correctamente.'
+        });
+      }
+    };
+    img.src = imageDataUrl;
+  };
+
 
 
   const handleAnalyze = async () => {
     setLoading(true);
     setAnalysisResult(null);
     try {
-      // Verificar que al menos una imagen esté cargada
-      const isMicroscopicAnalysis = preferences.useMicroscopicAnalysis && microscopicImage;
-
-      if (!image && !isMicroscopicAnalysis) {
-        throw new Error('Por favor, sube al menos una imagen antes de analizar.');
+      // Verificar que al menos la imagen general esté cargada
+      if (!image) {
+        throw new Error('Por favor, sube una imagen general de la planta antes de analizar.');
       }
-
-      // Si se ha activado el análisis microscópico pero no hay imagen microscópica
-      if (preferences.useMicroscopicAnalysis && !microscopicImage && !image) {
-        throw new Error('Has activado el análisis microscópico pero no has subido una imagen de tricomas.');
-      }
-
-      // Determinar qué imagen analizar (priorizar la microscópica si está habilitada)
-      const photoToAnalyze = isMicroscopicAnalysis ? microscopicImage : image;
 
       // Preparar los datos para el análisis
       const analysisData: any = {
-        photoUrl: photoToAnalyze,
-        description: plantDescription,
-        isMicroscopicImage: isMicroscopicAnalysis
+        photoUrl: image,
+        description: plantDescription
       };
+
+      // Añadir la imagen microscópica si está disponible
+      if (preferences.useMicroscopicAnalysis && microscopicImage) {
+        analysisData.microscopicPhotoUrl = microscopicImage;
+      }
 
       // Añadir información de variedad si está seleccionada
       if (selectedVariety) {
@@ -294,8 +315,8 @@ export default function Home() {
 
       toast({
         title: 'Análisis Completo',
-        description: isMicroscopicAnalysis
-          ? 'Análisis microscópico de tricomas generado con éxito.'
+        description: result.microscopicAnalysis
+          ? 'Análisis completo con imagen general y microscópica generado con éxito.'
           : 'Análisis de madurez generado con éxito.',
       });
     } catch (error: any) {
@@ -366,12 +387,32 @@ export default function Home() {
                     className="hidden"
                     onChange={(e) => handleImageUpload(e, false)}
                   />
-                  <Button variant="secondary" asChild>
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      {image ? 'Cambiar Imagen' : 'Subir Imagen'}
-                    </label>
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <Button variant="secondary" asChild className="w-full">
+                      <label htmlFor="image-upload" className="cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        {image ? 'Cambiar Imagen' : 'Subir Imagen'}
+                      </label>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setCameraOpen(true)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                      {image ? 'Usar Cámara' : 'Tomar Foto'}
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Diálogo de captura de cámara para imagen general */}
+                <CameraCapture
+                  open={cameraOpen}
+                  onClose={() => setCameraOpen(false)}
+                  onImageCapture={(imageDataUrl) => handleCameraCapture(imageDataUrl, false)}
+                  title="Capturar Imagen de Cannabis"
+                  description="Toma una foto clara de la planta completa o de los cogollos para analizar."
+                />
                 <Textarea
                   placeholder="Describe la planta (opcional)"
                   value={plantDescription}
@@ -446,12 +487,32 @@ export default function Home() {
                     className="hidden"
                     onChange={(e) => handleImageUpload(e, true)}
                   />
-                  <Button variant="secondary" asChild>
-                    <label htmlFor="microscopic-upload" className="cursor-pointer">
-                      {microscopicImage ? 'Cambiar Imagen' : 'Subir Imagen de Tricomas'}
-                    </label>
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <Button variant="secondary" asChild className="w-full">
+                      <label htmlFor="microscopic-upload" className="cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        {microscopicImage ? 'Cambiar Imagen' : 'Subir Imagen de Tricomas'}
+                      </label>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setMicroscopicCameraOpen(true)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                      {microscopicImage ? 'Usar Cámara' : 'Tomar Foto'}
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Diálogo de captura de cámara para imagen microscópica */}
+                <CameraCapture
+                  open={microscopicCameraOpen}
+                  onClose={() => setMicroscopicCameraOpen(false)}
+                  onImageCapture={(imageDataUrl) => handleCameraCapture(imageDataUrl, true)}
+                  title="Capturar Imagen Microscópica"
+                  description="Toma una foto clara de los tricomas para un análisis más preciso."
+                />
                 <div className="bg-muted p-3 rounded-md text-sm">
                   <p className="font-medium mb-1">Consejos para imágenes microscópicas:</p>
                   <ul className="list-disc list-inside space-y-1">
@@ -482,6 +543,7 @@ export default function Home() {
                   weatherData={weatherData}
                   weatherImpact={weatherImpact}
                   onRequestLocation={requestLocation}
+                  onManualLocationSelected={handleLocationSelected}
                   isLoading={loadingWeather}
                 />
 
@@ -513,7 +575,9 @@ export default function Home() {
             ) : (
               <WeatherFallback
                 onRequestLocation={requestLocation}
+                onManualLocationSelected={handleLocationSelected}
                 isLoading={loadingWeather}
+                currentLocation={userLocation}
                 error={hasGeolocationPermission === false ?
                   'Tu navegador no soporta geolocalización o has bloqueado el permiso.' :
                   undefined
