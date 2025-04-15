@@ -1,6 +1,10 @@
 # HarvestAI - Asistente Inteligente para Cultivadores de Cannabis
 
-HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores de cannabis a determinar el momento óptimo de cosecha mediante análisis de imágenes con inteligencia artificial y datos climáticos en tiempo real.
+<p align="center">
+  <img src="/public/favicon.svg" alt="HarvestAI Logo" width="120" height="120">
+</p>
+
+HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores de cannabis a determinar el momento óptimo de cosecha mediante análisis de imágenes con inteligencia artificial y datos climáticos en tiempo real. La aplicación está diseñada para ser intuitiva y fácil de usar, incluso para cultivadores principiantes.
 
 ## Características Principales
 
@@ -9,6 +13,7 @@ HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores d
 - **Análisis Microscópico**: Permite analizar imágenes de tricomas para una evaluación más precisa.
 - **Captura de Imágenes**: Soporte para carga de archivos y captura directa desde la cámara del dispositivo.
 - **Extracción de Metadatos**: Obtiene datos de geolocalización de las imágenes EXIF cuando están disponibles.
+- **Asistente Paso a Paso**: Flujo guiado para usuarios que prefieren un proceso estructurado.
 
 ### Análisis Climático
 - **Datos Climáticos en Tiempo Real**: Integración con APIs de clima para obtener condiciones actuales.
@@ -21,11 +26,14 @@ HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores d
 - **Preferencias de Usuario**: Configuración de variedades preferidas y umbrales climáticos.
 - **Variedades de Cannabis**: Base de datos con diferentes variedades y sus características específicas.
 - **Recomendaciones Personalizadas**: Consejos adaptados según la variedad, etapa de crecimiento y condiciones climáticas.
+- **Asistente de Identificación**: Ayuda a usuarios que desconocen la variedad genética de su planta.
+- **Modo Flexible**: Soporte para análisis con variedades desconocidas usando valores promedio.
 
 ### Visualización de Datos
 - **Gráficos Climáticos**: Visualización de la evolución de temperatura y humedad.
 - **Indicadores de Impacto**: Representación visual del impacto de las condiciones climáticas.
 - **Interfaz Adaptativa**: Diseño responsive para dispositivos móviles y de escritorio.
+- **Flujo Optimizado**: Navegación intuitiva entre las diferentes funcionalidades de la aplicación.
 
 ## Tecnologías Utilizadas
 
@@ -56,6 +64,8 @@ HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores d
 3. **Validación de Imágenes**: Verificación de tamaño, dimensiones y formato.
 4. **Descripción Textual**: Campo opcional para proporcionar contexto adicional.
 5. **Análisis Microscópico**: Evaluación de tricomas para determinar madurez con mayor precisión.
+6. **Asistente Paso a Paso**: Flujo guiado que lleva al usuario a través del proceso completo de análisis.
+7. **Preferencias Rápidas**: Configuración de preferencias directamente en la pantalla principal.
 
 ### Análisis Climático
 1. **Condiciones Actuales**: Temperatura, humedad, índice UV, viento y precipitación.
@@ -70,6 +80,8 @@ HarvestAI es una aplicación web avanzada diseñada para ayudar a cultivadores d
 3. **Consejos Específicos por Variedad**: Recomendaciones adaptadas al tipo de cannabis.
 4. **Medidas Preventivas**: Sugerencias para proteger las plantas de condiciones adversas.
 5. **Indicadores de Confianza**: Nivel de certeza en las predicciones realizadas.
+6. **Soporte para Variedades Desconocidas**: Recomendaciones basadas en valores promedio cuando el usuario desconoce la variedad.
+7. **Asistente de Identificación**: Ayuda interactiva para identificar la posible variedad de la planta.
 
 ## Requisitos del Sistema
 
@@ -143,6 +155,25 @@ npm run dev
 - La precisión del análisis depende de la calidad de las imágenes proporcionadas.
 - Los datos climáticos pueden no estar disponibles para ubicaciones muy remotas.
 - La funcionalidad de cámara requiere permisos del navegador y puede variar según el dispositivo.
+- Las estimaciones para variedades desconocidas son menos precisas que para variedades identificadas.
+
+## Nuevas Funcionalidades (v1.1.0)
+
+### Mejoras en la Experiencia de Usuario
+- **Flujo Optimizado**: Rediseño del flujo de usuario para una experiencia más intuitiva y eficiente.
+- **Asistente Paso a Paso**: Nuevo modo guiado que lleva al usuario a través del proceso completo de análisis.
+- **Preferencias Integradas**: Configuración de preferencias directamente en la pantalla principal.
+- **Navegación Mejorada**: Botones contextuales para facilitar el movimiento entre pestañas relacionadas.
+
+### Soporte para Variedades Desconocidas
+- **Opción "Desconocida/Otra"**: Soporte para usuarios que no conocen la variedad genética de su planta.
+- **Asistente de Identificación**: Herramienta interactiva para ayudar a identificar posibles variedades.
+- **Valores Promedio**: Análisis basado en características promedio cuando no se conoce la variedad específica.
+
+### Mejoras Visuales
+- **Nuevo Favicon**: Icono personalizado que refleja la temática de la aplicación.
+- **Interfaz Más Clara**: Mejoras en la organización visual de los elementos de la interfaz.
+- **Accesos Directos**: Botones de acción contextuales que aparecen cuando son relevantes.
 
 ## Contribuciones
 Las contribuciones son bienvenidas. Por favor, abre un issue para discutir cambios importantes antes de enviar un pull request.

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import {
   Card,
@@ -18,22 +18,23 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
-import { 
-  CANNABIS_VARIETIES, 
-  CannabisVariety, 
-  HarvestPreference, 
-  UserPreferences, 
-  DEFAULT_PREFERENCES 
+import {
+  CANNABIS_VARIETIES,
+  CannabisVariety,
+  HarvestPreference,
+  UserPreferences,
+  DEFAULT_PREFERENCES
 } from '@/types/cannabis';
+import { VarietyHelper } from '@/components/variety-helper';
 
 interface CannabisPreferencesProps {
   preferences: UserPreferences;
   onPreferencesChange: (preferences: UserPreferences) => void;
 }
 
-export function CannabisPreferences({ 
-  preferences, 
-  onPreferencesChange 
+export function CannabisPreferences({
+  preferences,
+  onPreferencesChange
 }: CannabisPreferencesProps) {
   const [selectedVariety, setSelectedVariety] = useState<string>(
     preferences.preferredVarieties[0] || ''
@@ -77,9 +78,12 @@ export function CannabisPreferences({
       <CardContent className="space-y-6">
         {/* Selector de variedad */}
         <div className="space-y-2">
-          <Label htmlFor="variety">Variedad de Cannabis</Label>
-          <Select 
-            value={selectedVariety} 
+          <div className="flex items-center justify-between">
+            <Label htmlFor="variety">Variedad de Cannabis</Label>
+            <VarietyHelper onVarietySelect={handleVarietyChange} />
+          </div>
+          <Select
+            value={selectedVariety}
             onValueChange={handleVarietyChange}
           >
             <SelectTrigger id="variety">
@@ -93,21 +97,32 @@ export function CannabisPreferences({
               ))}
             </SelectContent>
           </Select>
-          
+
           {selectedVarietyDetails && (
             <p className="text-sm text-muted-foreground mt-2">
-              {selectedVarietyDetails.description} 
+              {selectedVarietyDetails.description}
               <br />
               Tiempo de floración: {selectedVarietyDetails.floweringTime.min}-{selectedVarietyDetails.floweringTime.max} días
             </p>
+          )}
+
+          {selectedVariety === 'unknown' && (
+            <div className="p-3 bg-muted/50 rounded-md mt-2">
+              <p className="text-sm">
+                Has seleccionado "Desconocida/Otra". Se usarán valores promedio para el análisis.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Para resultados más precisos, intenta identificar la variedad usando el botón de ayuda.
+              </p>
+            </div>
           )}
         </div>
 
         {/* Preferencia de cosecha */}
         <div className="space-y-2">
           <Label>Preferencia de Efectos</Label>
-          <RadioGroup 
-            value={preferences.harvestPreference} 
+          <RadioGroup
+            value={preferences.harvestPreference}
             onValueChange={(value) => handlePreferenceChange(value as HarvestPreference)}
             className="flex flex-col space-y-1"
           >

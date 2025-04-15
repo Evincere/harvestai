@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from "@/components/ui/badge";
 import { AnalyzeCannabisImageOutput } from '@/ai/flows/analyze-cannabis-image';
 import { CannabisPreferences } from '@/components/cannabis-preferences';
+import { QuickPreferences } from '@/components/quick-preferences';
+import { AnalysisWizard } from '@/components/analysis-wizard';
 import { ClimateConditions } from '@/components/climate-conditions';
 import { WeatherImpact } from '@/components/weather-impact';
 import { WeatherFallback } from '@/components/weather-fallback';
@@ -19,7 +21,8 @@ import { CANNABIS_VARIETIES, CannabisVariety, DEFAULT_PREFERENCES, UserPreferenc
 import { GeoLocation, WeatherData, WeatherImpact as WeatherImpactType } from '@/types/weather';
 import { ExifService } from '@/services/geo/exif-service';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Settings, Search, Cloud, MapPin } from "lucide-react";
+import { Home, Settings, Search, Cloud, MapPin, ArrowRight, Wand2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { Spinner } from '@/components/icons';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -51,6 +54,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<string>('general');
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [selectedVariety, setSelectedVariety] = useState<CannabisVariety | undefined>(undefined);
+  const [useWizard, setUseWizard] = useState<boolean>(false);
 
   // Estados para funcionalidades de clima
   const [userLocation, setUserLocation] = useState<GeoLocation | null>(null);
@@ -66,7 +70,9 @@ export default function HomePage() {
   // Función para manejar la ubicación seleccionada (automática o manual)
   const handleLocationSelected = (location: GeoLocation) => {
     setUserLocation(location);
-    setActiveTab('weather');
+
+    // Ya no cambiamos automáticamente a la pestaña de clima
+    // Solo mostramos un mensaje informativo
 
     // Mostrar mensaje de éxito
     toast({
@@ -125,15 +131,29 @@ export default function HomePage() {
       navigator.permissions.query({ name: 'geolocation' as PermissionName }).then(result => {
         setHasGeolocationPermission(result.state === 'granted');
 
-        // Si el permiso ya está concedido, solicitar la ubicación automáticamente
-        if (result.state === 'granted' && !userLocation && !weatherData) {
-          requestLocation();
-        }
+        // Ya no solicitamos la ubicación automáticamente al cargar la página
+        // para evitar cambios inesperados en la navegación
       });
     } else {
       setHasGeolocationPermission(false);
     }
-  }, [userLocation, weatherData, requestLocation]);
+
+    // Manejador para el evento personalizado de navegación entre pestañas
+    const handleTabNavigation = (event: CustomEvent) => {
+      const tabName = event.detail;
+      if (tabName && typeof tabName === 'string') {
+        setActiveTab(tabName);
+      }
+    };
+
+    // Registrar el manejador de eventos
+    window.addEventListener('navigate-to-tab', handleTabNavigation as EventListener);
+
+    // Limpiar el manejador al desmontar el componente
+    return () => {
+      window.removeEventListener('navigate-to-tab', handleTabNavigation as EventListener);
+    };
+  }, []);
 
   // Actualizar la variedad seleccionada cuando cambian las preferencias
   const handlePreferencesChange = (newPreferences: UserPreferences) => {
@@ -348,36 +368,66 @@ export default function HomePage() {
       <ApiKeyWarning />
 
       <div className="w-full max-w-2xl space-y-6 mb-8">
-        {/* Pestañas para navegación */}
-        <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="general">
-              <span className="hidden sm:inline">General</span>
-              <Home className="w-5 h-5 inline-flex sm:hidden" />
-            </TabsTrigger>
-            <TabsTrigger value="preferences">
-              <span className="hidden sm:inline">Preferencias</span>
-              <Settings className="w-5 h-5 inline-flex sm:hidden" />
-            </TabsTrigger>
-            <TabsTrigger
-              value="microscopic"
-              disabled={!preferences.useMicroscopicAnalysis}
-            >
-              <span className="hidden sm:inline">Microscópico</span>
-              <Search className="w-5 h-5 inline-flex sm:hidden" />
-            </TabsTrigger>
-            <TabsTrigger value="climate">
-              <span className="hidden sm:inline">Clima</span>
-              <Cloud className="w-5 h-5 inline-flex sm:hidden" />
-            </TabsTrigger>
-            <TabsTrigger
-              value="weather"
-              disabled={!weatherData}
-            >
-              <span className="hidden sm:inline">Clima Real</span>
-              <MapPin className="w-5 h-5 inline-flex sm:hidden" />
-            </TabsTrigger>
-          </TabsList>
+        {/* Selector de modo: Asistente o Pestañas */}
+        <div className="flex justify-end mb-2">
+          <Button
+            variant={useWizard ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUseWizard(!useWizard)}
+            className="gap-2"
+          >
+            <Wand2 className="h-4 w-4" />
+            {useWizard ? "Usando Asistente" : "Usar Asistente"}
+          </Button>
+        </div>
+
+        {useWizard ? (
+          <AnalysisWizard
+            preferences={preferences}
+            onPreferencesChange={handlePreferencesChange}
+            onImageUpload={handleImageUpload}
+            onCameraCapture={handleCameraCapture}
+            onDescriptionChange={(value) => setPlantDescription(value)}
+            onAnalyze={handleAnalyze}
+            image={image}
+            microscopicImage={microscopicImage}
+            description={plantDescription}
+            loading={loading}
+            cameraOpen={cameraOpen}
+            setCameraOpen={setCameraOpen}
+            microscopicCameraOpen={microscopicCameraOpen}
+            setMicroscopicCameraOpen={setMicroscopicCameraOpen}
+          />
+        ) : (
+          <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="general">
+                <span className="hidden sm:inline">General</span>
+                <Home className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+              <TabsTrigger value="preferences">
+                <span className="hidden sm:inline">Preferencias</span>
+                <Settings className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+              <TabsTrigger
+                value="microscopic"
+                disabled={!preferences.useMicroscopicAnalysis}
+              >
+                <span className="hidden sm:inline">Microscópico</span>
+                <Search className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+              <TabsTrigger value="climate">
+                <span className="hidden sm:inline">Clima</span>
+                <Cloud className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+              <TabsTrigger
+                value="weather"
+                disabled={!weatherData}
+              >
+                <span className="hidden sm:inline">Clima Real</span>
+                <MapPin className="w-5 h-5 inline-flex sm:hidden" />
+              </TabsTrigger>
+            </TabsList>
 
           {/* Pestaña de análisis general */}
           <TabsContent value="general" className="space-y-4">
@@ -387,6 +437,27 @@ export default function HomePage() {
                 <CardDescription>Sube una imagen de tu planta de cannabis para determinar su madurez.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Preferencias rápidas */}
+                <div className="p-4 bg-muted/40 rounded-lg">
+                  <h3 className="text-lg font-medium mb-3">Configuración Rápida</h3>
+                  <QuickPreferences
+                    preferences={preferences}
+                    onPreferencesChange={handlePreferencesChange}
+                    onMicroscopicToggle={(enabled) => {
+                      if (enabled && !microscopicImage) {
+                        // Si se activa el análisis microscópico y no hay imagen, cambiar a esa pestaña
+                        setTimeout(() => setActiveTab('microscopic'), 300);
+                        toast({
+                          title: 'Análisis microscópico activado',
+                          description: 'Ahora puedes subir una imagen de tricomas para un análisis más preciso.',
+                        });
+                      }
+                    }}
+                  />
+                </div>
+
+                <Separator className="my-2" />
+
                 <div className="flex flex-col items-center space-y-2">
                   {image && (
                     <img src={image} alt="Cannabis Plant" className="max-h-64 rounded-md shadow-md" />
@@ -430,6 +501,8 @@ export default function HomePage() {
                   onChange={(e) => setPlantDescription(e.target.value)}
                   className="resize-none"
                 />
+
+                {/* Botones de acción */}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={handleAnalyze}
@@ -446,25 +519,51 @@ export default function HomePage() {
                     )}
                   </Button>
 
-                  <Button
-                    onClick={requestLocation}
-                    variant="outline"
-                    disabled={loadingWeather}
-                    className="w-full sm:w-auto"
-                  >
-                  {loadingWeather ? (
-                    <div className="flex items-center justify-center">
-                      <Spinner className="mr-2 h-4 w-4 animate-spin" />
-                      Obteniendo ubicación...
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                      Usar ubicación
-                    </div>
+                  {preferences.useMicroscopicAnalysis && !microscopicImage && (
+                    <Button
+                      onClick={() => setActiveTab('microscopic')}
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
+                      <div className="flex items-center">
+                        <Search className="mr-2 h-4 w-4" />
+                        Añadir imagen microscópica
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
+                    </Button>
                   )}
 
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button
+                      onClick={requestLocation}
+                      variant="outline"
+                      disabled={loadingWeather}
+                      className="w-full sm:w-auto"
+                    >
+                    {loadingWeather ? (
+                      <div className="flex items-center justify-center">
+                        <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                        Obteniendo ubicación...
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        Usar ubicación
+                      </div>
+                    )}
+                    </Button>
+
+                    <Button
+                      onClick={() => setActiveTab('weather')}
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
+                      <div className="flex items-center">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Seleccionar ubicación
+                      </div>
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -534,6 +633,31 @@ export default function HomePage() {
                     <li>Mantente estable para evitar imágenes borrosas</li>
                   </ul>
                 </div>
+
+                {/* Botones de navegación */}
+                <div className="flex justify-between mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab('general')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    Volver a General
+                  </Button>
+
+                  <Button
+                    onClick={handleAnalyze}
+                    disabled={(!image && !microscopicImage) || loading}
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                        Analizando...
+                      </div>
+                    ) : (
+                      'Analizar'
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -597,7 +721,8 @@ export default function HomePage() {
               />
             )}
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        )}
 
         {/* Resultados del análisis */}
         {analysisResult && (
@@ -699,7 +824,31 @@ export default function HomePage() {
                         </p>
                       </>
                     ) : (
-                      <p className="text-sm">Información de análisis microscópico no disponible. Activa el análisis microscópico en la pestaña de preferencias y sube una imagen de tricomas para obtener esta información.</p>
+                      <p className="text-sm">Información de análisis microscópico no disponible.
+                        {!preferences.useMicroscopicAnalysis ? (
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto text-sm"
+                            onClick={() => {
+                              handlePreferencesChange({
+                                ...preferences,
+                                useMicroscopicAnalysis: true
+                              });
+                              setTimeout(() => setActiveTab('microscopic'), 300);
+                            }}
+                          >
+                            Activar análisis microscópico
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto text-sm"
+                            onClick={() => setActiveTab('microscopic')}
+                          >
+                            Subir imagen de tricomas
+                          </Button>
+                        )}
+                      </p>
                     )}
                   </div>
                 )}

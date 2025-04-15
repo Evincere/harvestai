@@ -20,6 +20,18 @@ export interface CannabisVariety {
 // Base de datos de variedades comunes
 export const CANNABIS_VARIETIES: CannabisVariety[] = [
   {
+    id: 'unknown',
+    name: 'Desconocida/Otra',
+    type: 'Híbrido',
+    floweringTime: { min: 60, max: 75 }, // Valores promedio
+    characteristics: {
+      pistilsMaturationRate: 6,
+      trichomesDevelopmentRate: 7,
+      leafColorChangeRate: 5
+    },
+    description: 'Valores promedio para cualquier variedad desconocida o no listada.'
+  },
+  {
     id: 'og-kush',
     name: 'OG Kush',
     type: 'Híbrido',

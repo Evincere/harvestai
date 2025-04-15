@@ -200,15 +200,20 @@ async function analyzeGeneralImage(
     const formattedCurrentDate = `${String(currentDate.getDate()).padStart(2, '0')}/${String(currentDate.getMonth() + 1).padStart(2, '0')}/${currentDate.getFullYear()}`;
 
     if (variety && preferences) {
+      // Verificar si es la variedad "Desconocida/Otra"
+      const isUnknownVariety = variety.id === 'unknown';
+
       instruccionesAdicionales += `
       INSTRUCCIONES PARA ESTIMACIÓN DE TIEMPO HASTA COSECHA:
       - La fecha actual es: ${formattedCurrentDate}
       - Basado en la variedad ${variety.name} (${variety.type}) con tiempo de floración de ${variety.floweringTime.min}-${variety.floweringTime.max} días
+      ${isUnknownVariety ? '- NOTA: Se están usando valores promedio para una variedad desconocida' : ''}
       - Ajusta la estimación según la preferencia del usuario: ${preferences.harvestPreference}
       - Para preferencia "Energético", recomienda cosechar cuando la mayoría de tricomas estén lechosos con pocos ámbar
       - Para preferencia "Equilibrado", recomienda cosechar cuando haya aproximadamente 10-15% de tricomas ámbar
       - Para preferencia "Relajante", recomienda cosechar cuando haya 20-30% de tricomas ámbar
       - IMPORTANTE: Asegúrate de que la fecha óptima de cosecha sea posterior a la fecha actual y esté en el año ${currentDate.getFullYear()} o posterior
+      ${isUnknownVariety ? '- Debido a que la variedad es desconocida, proporciona un rango más amplio para la ventana de cosecha' : ''}
       `;
 
       // Añadir instrucciones específicas para considerar el clima si hay datos disponibles
